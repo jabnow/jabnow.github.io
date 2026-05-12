@@ -15,10 +15,6 @@
   let currentLabel = 'All files';
 
   const sortCards = () => {
-    if (!sort) {
-      return;
-    }
-
     const sorted = [...cards].sort((a, b) => {
       if (sort.value === 'title') {
         return (a.dataset.title || '').localeCompare(b.dataset.title || '');
