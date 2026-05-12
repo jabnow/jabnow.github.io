@@ -7,7 +7,7 @@
   const pathLine = document.getElementById('current-path');
   const grid = document.getElementById('project-grid');
 
-  if (!buttons.length || !cards.length || !search || !results || !pathLine || !grid) {
+  if (!buttons.length || !cards.length || !search || !sort || !results || !pathLine || !grid) {
     return;
   }
 
@@ -58,12 +58,10 @@
     });
   });
 
-  if (sort) {
-    sort.addEventListener('change', () => {
-      sortCards();
-      update();
-    });
-  }
+  sort.addEventListener('change', () => {
+    sortCards();
+    update();
+  });
 
   search.addEventListener('input', update);
   sortCards();
