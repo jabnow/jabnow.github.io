@@ -8,30 +8,45 @@
 </head>
 <body>
   <header class="topbar">
-    <p class="brand">Your Name<span>.desktop</span></p>
+    <div class="menu-cluster">
+      <p class="brand">Your Name<span>.desktop</span></p>
+      <span class="status-pill">Workspace Online</span>
+    </div>
     <nav>
-      <a href="index.html">Home</a>
+      <a href="index.html" aria-current="page">Home</a>
       <a href="projects.html">Projects</a>
       <a href="about.html">About</a>
     </nav>
   </header>
 
   <main class="shell">
-    <section class="hero">
-      <h1>Welcome to my project desktop</h1>
-      <p>Browse workspaces, open project files, and track what I am building now.</p>
+    <section class="window hero">
+      <div class="window-bar">
+        <span></span><span></span><span></span>
+      </div>
+      <h1>Desktop portfolio workspace</h1>
+      <p>Open folders, browse active files, and jump to work in progress.</p>
     </section>
 
     <section class="desktop-layout">
-      <aside class="panel">
-        <h2>Folders</h2>
-        <ul class="link-list">
-          <li><a href="projects.html#code">📁 Code Lab</a></li>
-          <li><a href="projects.html#excel">📁 Data Sheets</a></li>
-          <li><a href="projects.html#image">📁 Visual Studio</a></li>
-          <li><a href="projects.html#video">📁 Motion Desk</a></li>
-          <li><a href="projects.html#multimedia">📁 Mixed Media</a></li>
-        </ul>
+      <aside class="panel desktop-icons" aria-label="Desktop shortcuts">
+        <h2>Desktop</h2>
+        <a class="desktop-icon" href="projects.html#code">
+          <span>💻</span>
+          <strong>Code Lab</strong>
+        </a>
+        <a class="desktop-icon" href="projects.html#excel">
+          <span>📊</span>
+          <strong>Data Sheets</strong>
+        </a>
+        <a class="desktop-icon" href="projects.html#image">
+          <span>🖼️</span>
+          <strong>Visual Studio</strong>
+        </a>
+        <a class="desktop-icon" href="projects.html#video">
+          <span>🎬</span>
+          <strong>Motion Desk</strong>
+        </a>
       </aside>
 
       <section class="panel">
@@ -47,11 +62,28 @@
             <h3><a href="projects/project-2.html">Project Title 2</a></h3>
             <p>Recent analysis file with notes on process and lessons learned.</p>
           </article>
+          <article class="desktop-card">
+            <span class="badge">Queue</span>
+            <h3><a href="projects.html">Project Filing Cabinet</a></h3>
+            <p>Use folder filters and search to open files by category.</p>
+          </article>
+          <article class="desktop-card">
+            <span class="badge">Profile</span>
+            <h3><a href="about.html">About Workspace</a></h3>
+            <p>Find profile details, collaboration focus, and contact info.</p>
+          </article>
         </div>
       </section>
     </section>
   </main>
 
-  <footer>© 2026 Your Name</footer>
+  <footer>
+    <nav class="dock" aria-label="Dock">
+      <a href="index.html" aria-current="page">🏠 Home</a>
+      <a href="projects.html">🗂️ Files</a>
+      <a href="about.html">👤 About</a>
+    </nav>
+    <p>© 2026 Your Name</p>
+  </footer>
 </body>
 </html>

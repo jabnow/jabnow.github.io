@@ -8,23 +8,29 @@
 </head>
 <body>
   <header class="topbar">
-    <p class="brand">Your Name<span>.desktop</span></p>
+    <div class="menu-cluster">
+      <p class="brand">Your Name<span>.desktop</span></p>
+      <span class="status-pill">Profile Window</span>
+    </div>
     <nav>
       <a href="index.html">Home</a>
       <a href="projects.html">Projects</a>
-      <a href="about.html">About</a>
+      <a href="about.html" aria-current="page">About</a>
     </nav>
   </header>
 
   <main class="shell">
-    <section class="hero">
+    <section class="window hero">
+      <div class="window-bar">
+        <span></span><span></span><span></span>
+      </div>
       <h1>About this workspace</h1>
-      <p>Quick profile, focus areas, and contact details for collaboration.</p>
+      <p>Profile summary, focus areas, and contact details for collaboration.</p>
     </section>
 
     <section class="desktop-layout">
-      <aside class="panel">
-        <h2>Profile shortcuts</h2>
+      <aside class="panel" aria-label="Profile navigation">
+        <h2>Explorer</h2>
         <ul class="link-list">
           <li><a href="#profile">👤 Profile</a></li>
           <li><a href="#areas">🧭 Areas</a></li>
@@ -49,6 +55,13 @@
     </section>
   </main>
 
-  <footer>© 2026 Your Name</footer>
+  <footer>
+    <nav class="dock" aria-label="Dock">
+      <a href="index.html">🏠 Home</a>
+      <a href="projects.html">🗂️ Files</a>
+      <a href="about.html" aria-current="page">👤 About</a>
+    </nav>
+    <p>© 2026 Your Name</p>
+  </footer>
 </body>
 </html>

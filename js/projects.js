@@ -2,13 +2,33 @@
   const buttons = Array.from(document.querySelectorAll('.folder-btn'));
   const cards = Array.from(document.querySelectorAll('.desktop-card'));
   const search = document.getElementById('project-search');
+  const sort = document.getElementById('project-sort');
   const results = document.getElementById('results-count');
+  const pathLine = document.getElementById('current-path');
+  const grid = document.getElementById('project-grid');
 
-  if (!buttons.length || !cards.length || !search || !results) {
+  if (!buttons.length || !cards.length || !search || !results || !pathLine || !grid) {
     return;
   }
 
   let currentFilter = 'all';
+  let currentLabel = 'All files';
+
+  const sortCards = () => {
+    if (!sort) {
+      return;
+    }
+
+    const sorted = [...cards].sort((a, b) => {
+      if (sort.value === 'title') {
+        return (a.dataset.title || '').localeCompare(b.dataset.title || '');
+      }
+
+      return (b.dataset.updated || '').localeCompare(a.dataset.updated || '');
+    });
+
+    sorted.forEach((card) => grid.appendChild(card));
+  };
 
   const update = () => {
     const query = search.value.trim().toLowerCase();
@@ -27,12 +47,14 @@
       }
     });
 
+    pathLine.textContent = `Path: Desktop / ${currentLabel}`;
     results.textContent = `Showing ${visibleCount} project${visibleCount === 1 ? '' : 's'}`;
   };
 
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
       currentFilter = button.dataset.filter || 'all';
+      currentLabel = button.dataset.label || 'All files';
       buttons.forEach((item) => {
         item.setAttribute('aria-pressed', String(item === button));
       });
@@ -40,6 +62,14 @@
     });
   });
 
+  if (sort) {
+    sort.addEventListener('change', () => {
+      sortCards();
+      update();
+    });
+  }
+
   search.addEventListener('input', update);
+  sortCards();
   update();
 })();
