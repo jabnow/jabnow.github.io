@@ -8,38 +8,59 @@
 </head>
 <body>
   <header class="topbar">
-    <p class="brand">Your Name<span>.desktop</span></p>
+    <div class="menu-cluster">
+      <p class="brand">Your Name<span>.desktop</span></p>
+      <span class="status-pill">Opened File</span>
+    </div>
     <nav>
       <a href="../index.html">Home</a>
-      <a href="../projects.html">Projects</a>
+      <a href="../projects.html" aria-current="page">Projects</a>
       <a href="../about.html">About</a>
     </nav>
   </header>
 
   <main class="shell">
-    <section class="hero">
+    <section class="window hero">
+      <div class="window-bar">
+        <span></span><span></span><span></span>
+      </div>
       <h1>Project Title 2</h1>
       <p>File opened from the Excel folder.</p>
     </section>
 
-    <article class="article-shell">
-      <p><strong>Type:</strong> Excel / Analysis</p>
-      <p><strong>Date:</strong> Month Year</p>
+    <section class="desktop-layout">
+      <aside class="panel" aria-label="File details">
+        <h2>File details</h2>
+        <ul class="link-list">
+          <li><strong>Type:</strong> Excel / Analysis</li>
+          <li><strong>Date:</strong> Month Year</li>
+          <li><a href="../projects.html#excel">← Back to folder</a></li>
+        </ul>
+      </aside>
 
-      <h2>Overview</h2>
-      <p>Brief summary of the project goal and context.</p>
+      <article class="article-shell">
+        <h2>Overview</h2>
+        <p>Brief summary of the project goal and context.</p>
 
-      <h2>Artifact</h2>
-      <p><a href="../assets/project-2.xlsx">Download workbook</a></p>
+        <h2>Artifact</h2>
+        <p><a href="../assets/project-2.xlsx">Download workbook</a></p>
 
-      <h2>Method</h2>
-      <p>Data sources, process, and analytical steps.</p>
+        <h2>Method</h2>
+        <p>Data sources, process, and analytical steps.</p>
 
-      <h2>Reflection</h2>
-      <p>Lessons learned, limitations, and next iteration ideas.</p>
-    </article>
+        <h2>Reflection</h2>
+        <p>Lessons learned, limitations, and next iteration ideas.</p>
+      </article>
+    </section>
   </main>
 
-  <footer>© 2026 Your Name</footer>
+  <footer>
+    <nav class="dock" aria-label="Dock">
+      <a href="../index.html">🏠 Home</a>
+      <a href="../projects.html" aria-current="page">🗂️ Files</a>
+      <a href="../about.html">👤 About</a>
+    </nav>
+    <p>© 2026 Your Name</p>
+  </footer>
 </body>
 </html>
