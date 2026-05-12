@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="masthead">
-    <h1>About</h1>
+  <header class="topbar">
+    <p class="brand">Your Name<span>.desktop</span></p>
     <nav>
       <a href="index.html">Home</a>
       <a href="projects.html">Projects</a>
@@ -16,19 +16,39 @@
     </nav>
   </header>
 
-  <main class="article">
-    <h2>Profile</h2>
-    <p>Short academic bio, interests, and current focus.</p>
+  <main class="shell">
+    <section class="hero">
+      <h1>About this workspace</h1>
+      <p>Quick profile, focus areas, and contact details for collaboration.</p>
+    </section>
 
-    <h2>Research and Project Areas</h2>
-    <ul>
-      <li>Data analysis and coding</li>
-      <li>Spreadsheet modeling and reporting</li>
-      <li>Visual and multimedia communication</li>
-    </ul>
+    <section class="desktop-layout">
+      <aside class="panel">
+        <h2>Profile shortcuts</h2>
+        <ul class="link-list">
+          <li><a href="#profile">👤 Profile</a></li>
+          <li><a href="#areas">🧭 Areas</a></li>
+          <li><a href="#contact">✉️ Contact</a></li>
+        </ul>
+      </aside>
 
-    <h2>Contact</h2>
-    <p>Email: yourname@example.com</p>
+      <article class="article-shell" id="profile">
+        <h2>Profile</h2>
+        <p>Short academic bio, interests, and current focus.</p>
+
+        <h2 id="areas">Research and project areas</h2>
+        <ul>
+          <li>Data analysis and coding</li>
+          <li>Spreadsheet modeling and reporting</li>
+          <li>Visual and multimedia communication</li>
+        </ul>
+
+        <h2 id="contact">Contact</h2>
+        <p>Email: yourname@example.com</p>
+      </article>
+    </section>
   </main>
+
+  <footer>© 2026 Your Name</footer>
 </body>
 </html>

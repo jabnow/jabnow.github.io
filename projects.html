@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="masthead">
-    <h1>Project Index</h1>
+  <header class="topbar">
+    <p class="brand">Your Name<span>.desktop</span></p>
     <nav>
       <a href="index.html">Home</a>
       <a href="projects.html">Projects</a>
@@ -16,12 +16,67 @@
     </nav>
   </header>
 
-  <main class="grid">
-    <section id="code"><h2>Code</h2><p><a href="projects/project-1.html">Project 1</a></p></section>
-    <section id="excel"><h2>Excel</h2><p><a href="projects/project-2.html">Project 2</a></p></section>
-    <section id="image"><h2>Image</h2><p>Add project links...</p></section>
-    <section id="video"><h2>Video</h2><p>Add project links...</p></section>
-    <section id="multimedia"><h2>Multimedia</h2><p>Add project links...</p></section>
+  <main class="shell">
+    <section class="hero">
+      <h1>Project filing cabinet</h1>
+      <p>Open a folder to filter projects, or search by keyword.</p>
+    </section>
+
+    <section class="desktop-layout">
+      <aside class="panel" aria-label="Folders">
+        <h2>Folders</h2>
+        <ul class="folder-list">
+          <li><button class="folder-btn" data-filter="all" aria-pressed="true"><span class="folder-label">🗂️ All files</span></button></li>
+          <li><button class="folder-btn" data-filter="code" aria-pressed="false"><span class="folder-label">💻 Code</span></button></li>
+          <li><button class="folder-btn" data-filter="excel" aria-pressed="false"><span class="folder-label">📊 Excel</span></button></li>
+          <li><button class="folder-btn" data-filter="image" aria-pressed="false"><span class="folder-label">🖼️ Image</span></button></li>
+          <li><button class="folder-btn" data-filter="video" aria-pressed="false"><span class="folder-label">🎬 Video</span></button></li>
+          <li><button class="folder-btn" data-filter="multimedia" aria-pressed="false"><span class="folder-label">🎛️ Multimedia</span></button></li>
+        </ul>
+      </aside>
+
+      <section class="panel">
+        <div class="controls">
+          <input id="project-search" type="search" placeholder="Search projects, tags, or tools" aria-label="Search projects" />
+        </div>
+        <p class="status-line" id="results-count">Showing 0 projects</p>
+
+        <div class="desktop-grid" id="project-grid">
+          <article class="desktop-card" id="code" data-category="code" data-search="project title code app javascript portfolio">
+            <span class="badge">Code</span>
+            <h3><a href="projects/project-1.html">Project 1</a></h3>
+            <p>Build and implementation workflow for an interactive project.</p>
+          </article>
+
+          <article class="desktop-card" id="excel" data-category="excel" data-search="project title 2 excel analysis spreadsheet dashboard">
+            <span class="badge">Excel</span>
+            <h3><a href="projects/project-2.html">Project 2</a></h3>
+            <p>Workbook-driven analysis and reporting outputs.</p>
+          </article>
+
+          <article class="desktop-card" id="image" data-category="image" data-search="image visual design illustration editing">
+            <span class="badge">Image</span>
+            <h3><a href="#">Image Project</a></h3>
+            <p>Static visual communications and graphics experiments.</p>
+          </article>
+
+          <article class="desktop-card" id="video" data-category="video" data-search="video motion storyboard editing short film">
+            <span class="badge">Video</span>
+            <h3><a href="#">Video Project</a></h3>
+            <p>Editing timeline, production notes, and final export.</p>
+          </article>
+
+          <article class="desktop-card" id="multimedia" data-category="multimedia" data-search="multimedia hybrid web audio interaction">
+            <span class="badge">Multimedia</span>
+            <h3><a href="#">Multimedia Project</a></h3>
+            <p>Cross-format project that combines tools and media types.</p>
+          </article>
+        </div>
+      </section>
+    </section>
   </main>
+
+  <footer>© 2026 Your Name</footer>
+  <script src="js/projects.js"></script>
 </body>
 </html>

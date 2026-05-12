@@ -3,13 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Your Name | Academic Portfolio</title>
+  <title>Your Name | Desktop Portfolio</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="masthead">
-    <h1>Your Name</h1>
-    <p>Academic Portfolio — Projects, Reflections, and Research Artifacts</p>
+  <header class="topbar">
+    <p class="brand">Your Name<span>.desktop</span></p>
     <nav>
       <a href="index.html">Home</a>
       <a href="projects.html">Projects</a>
@@ -17,25 +16,40 @@
     </nav>
   </header>
 
-  <main class="layout">
-    <section class="lead">
-      <h2>Featured Project</h2>
-      <article class="card">
-        <h3><a href="projects/project-1.html">Project Title</a></h3>
-        <p>1–2 sentence summary of your project and key outcome.</p>
-      </article>
+  <main class="shell">
+    <section class="hero">
+      <h1>Welcome to my project desktop</h1>
+      <p>Browse workspaces, open project files, and track what I am building now.</p>
     </section>
 
-    <aside class="sidebar">
-      <h2>Index</h2>
-      <ul>
-        <li><a href="projects.html#code">Code Projects</a></li>
-        <li><a href="projects.html#excel">Excel Projects</a></li>
-        <li><a href="projects.html#image">Image Projects</a></li>
-        <li><a href="projects.html#video">Video Projects</a></li>
-        <li><a href="projects.html#multimedia">Multimedia Projects</a></li>
-      </ul>
-    </aside>
+    <section class="desktop-layout">
+      <aside class="panel">
+        <h2>Folders</h2>
+        <ul class="link-list">
+          <li><a href="projects.html#code">📁 Code Lab</a></li>
+          <li><a href="projects.html#excel">📁 Data Sheets</a></li>
+          <li><a href="projects.html#image">📁 Visual Studio</a></li>
+          <li><a href="projects.html#video">📁 Motion Desk</a></li>
+          <li><a href="projects.html#multimedia">📁 Mixed Media</a></li>
+        </ul>
+      </aside>
+
+      <section class="panel">
+        <h2>Open windows</h2>
+        <div class="desktop-grid">
+          <article class="desktop-card">
+            <span class="badge">Featured</span>
+            <h3><a href="projects/project-1.html">Project Title</a></h3>
+            <p>A highlighted build with outcomes, methods, and artifacts.</p>
+          </article>
+          <article class="desktop-card">
+            <span class="badge">Latest</span>
+            <h3><a href="projects/project-2.html">Project Title 2</a></h3>
+            <p>Recent analysis file with notes on process and lessons learned.</p>
+          </article>
+        </div>
+      </section>
+    </section>
   </main>
 
   <footer>© 2026 Your Name</footer>
