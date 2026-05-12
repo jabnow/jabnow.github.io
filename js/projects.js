@@ -61,7 +61,6 @@
 
   sort.addEventListener('change', () => {
     sortCards();
-    update();
   });
 
   search.addEventListener('input', update);
