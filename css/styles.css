@@ -299,7 +299,7 @@ a {
 
 .status-line {
   color: var(--muted);
-  margin: 0 0 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .article-shell h2 {
