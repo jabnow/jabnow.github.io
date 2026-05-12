@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nitin Sangwan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #eceae5;
+    --sidebar-bg: #ffffff;
+    --sidebar-w: 292px;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --text-dim: #aaa;
+    --border: #e0ddd8;
+    --border-dash: #d5d2cc;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --font: 'DM Sans', system-ui, sans-serif;
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: var(--font); font-size: 14px; color: var(--text); }
+
+  .app { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    padding: 22px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+  }
+
+  .sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+
+  .sb-starburst {
+    width: 30px; height: 30px; flex-shrink: 0;
+    animation: spinBurst 20s linear infinite;
+  }
+  @keyframes spinBurst { to { transform: rotate(360deg); } }
+
+  .sb-name { font-weight: 500; font-size: 14px; color: var(--text); letter-spacing: -0.01em; }
+
+  .sb-divider { border: none; border-top: 1px dashed var(--border-dash); margin: 13px 0; }
+
+  .sb-bio { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+  .sb-bio a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--border-dash); }
+
+  .sb-nav { list-style: none; margin-top: 4px; }
+  .sb-nav li { border-bottom: 1px dashed var(--border-dash); }
+  .sb-nav li:first-child { border-top: 1px dashed var(--border-dash); }
+
+  .sb-nav li button {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 11px 6px;
+    background: none; border: none; cursor: pointer;
+    font-family: var(--font); font-size: 13.5px; font-weight: 400;
+    color: var(--text-muted); text-align: left;
+    transition: color 0.15s;
+  }
+  .sb-nav li button:hover, .sb-nav li button.active { color: var(--text); }
+  .sb-nav li button .nav-icon { display:flex; align-items:center; justify-content:center; width:14px; height:14px; flex-shrink:0; opacity:0.45; transition: opacity 0.15s; }
+  .sb-nav li button:hover .nav-icon, .sb-nav li button.active .nav-icon { opacity: 1; }
+  .sb-nav li button .nav-arrow { margin-left: auto; font-size: 13px; opacity: 0.35; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow: hidden; position: relative; background: var(--bg); }
+
+  .page { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; overflow-y: auto; }
+  .page.active { opacity: 1; pointer-events: all; }
+
+  /* ── HOME / GRAPH ── */
+  #page-home { overflow: hidden; }
+  #graph-svg { width: 100%; height: 100%; }
+
+  .link-line { stroke: #c5c1bb; stroke-width: 1; }
+
+  .node-shape {
+    fill: white; stroke: #c0bdb7; stroke-width: 1.2;
+    cursor: pointer; transition: all 0.15s;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.08));
+  }
+  .node-shape:hover { stroke: var(--blue); fill: var(--blue-light); }
+
+  .node-label { font-family: var(--font); font-size: 12px; fill: #4a4a4a; pointer-events: none; user-select: none; }
+  .node-sublabel { font-size: 10.5px; fill: #888; }
+
+  /* ── WIN CHROME ── */
+  .win-chrome {
+    height: 40px; display: flex; align-items: center;
+    padding: 0 18px; border-bottom: 1px solid var(--border);
+    background: #f5f3ef; gap: 7px; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .win-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .win-dot:nth-child(1) { background: #ff5f57; }
+  .win-dot:nth-child(2) { background: #febc2e; }
+  .win-dot:nth-child(3) { background: #28c840; }
+  .win-title { font-size: 12.5px; color: var(--text-muted); margin-left: 10px; display: flex; align-items: center; gap: 7px; }
+  .win-title strong { color: var(--text); font-weight: 500; }
+  .win-crumb-sep { color: var(--text-dim); }
+  .win-right { margin-left: auto; font-size: 12px; color: var(--text-dim); }
+
+  /* ── PAGE INNER ── */
+  .page-inner { max-width: 680px; margin: 0 auto; padding: 44px 40px 80px; }
+
+  /* ── ABOUT ── */
+  .about-hero { font-size: 21px; font-weight: 400; line-height: 1.42; letter-spacing: -0.01em; margin-bottom: 22px; }
+  .about-bio { font-size: 13px; color: var(--text-muted); line-height: 1.75; margin-bottom: 11px; }
+  .sec-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); font-weight: 400; margin: 38px 0 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sec-label::after { content: ''; flex:1; height: 1px; background: var(--border); }
+
+  .exp-item { padding: 15px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; }
+  .exp-company { font-size: 13.5px; font-weight: 500; }
+  .exp-role { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .exp-desc { font-size: 12px; color: var(--text-muted); line-height: 1.65; margin-top: 7px; grid-column: 1; }
+  .exp-date { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; text-align: right; padding-top: 2px; }
+
+  .values-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+  .value-card { background: #1a1a1a; color: white; border-radius: 10px; padding: 18px 15px; font-size: 12.5px; font-weight: 500; line-height: 1.45; text-transform: uppercase; letter-spacing: 0.04em; min-height: 88px; display: flex; align-items: flex-end; }
+  .value-card:nth-child(2) { background: var(--blue); }
+  .value-card:nth-child(3) { background: #111; }
+
+  /* ── RESUME ── */
+  .resume-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .tab-btn { padding: 10px 16px; font-size: 13px; font-family: var(--font); font-weight: 400; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .export-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; background: var(--text); color: white; border: none; border-radius: 8px; font-size: 12.5px; font-family: var(--font); cursor: pointer; margin-bottom: 28px; transition: opacity 0.15s; }
+  .export-btn:hover { opacity: 0.82; }
+  .res-sec { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin: 24px 0 12px; }
+  .res-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+  .ri-title { font-size: 13.5px; font-weight: 500; }
+  .ri-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ri-desc { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; max-width: 420px; }
+  .ri-date { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; }
+  .skills-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .skill-tag { padding: 5px 12px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-muted); }
+
+  /* ── CONTACT ── */
+  .contact-h { font-size: 28px; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 10px; }
+  .contact-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 44px; line-height: 1.65; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 44px; align-items: start; }
+  .ci-items { display: flex; flex-direction: column; gap: 20px; }
+  .ci-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .ci-val { font-size: 13px; color: var(--text); }
+  .ci-val a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-dash); }
+  .cf { display: flex; flex-direction: column; gap: 12px; }
+  .cf label { display: block; font-size: 12.5px; color: var(--text-muted); margin-bottom: 5px; }
+  .cf input, .cf textarea { width: 100%; padding: 10px 13px; border: 1px solid var(--border); border-radius: 8px; background: white; font-family: var(--font); font-size: 13px; color: var(--text); outline: none; resize: none; transition: border-color 0.15s; }
+  .cf input:focus, .cf textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+  .cf textarea { min-height: 108px; }
+  .send-btn { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; font-family: var(--font); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+  .send-btn:hover { opacity: 0.9; }
+
+  /* ── WORK LIST ── */
+  .work-list { display: flex; flex-direction: column; }
+  .work-item { display: flex; align-items: center; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--border); cursor: pointer; text-decoration: none; color: inherit; }
+  .work-item:first-child { border-top: 1px solid var(--border); }
+  .work-item:hover .wi-title { color: var(--blue); }
+  .wi-num { font-size: 11px; color: var(--text-dim); width: 20px; flex-shrink: 0; }
+  .wi-dot { width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .wi-body { flex: 1; }
+  .wi-title { font-size: 13.5px; font-weight: 500; transition: color 0.15s; }
+  .wi-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .wi-tag { font-size: 11px; color: var(--text-dim); padding: 3px 9px; border: 1px solid var(--border); border-radius: 12px; white-space: nowrap; }
+  .wi-arr { color: var(--text-dim); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <svg class="sb-starburst" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 1 L17.8 10.2 L25.9 5.1 L20.8 13.2 L30 15 L20.8 16.8 L25.9 24.9 L17.8 19.8 L16 29 L14.2 19.8 L6.1 24.9 L11.2 16.8 L2 15 L11.2 13.2 L6.1 5.1 L14.2 10.2 Z" fill="#2563eb"/>
+        <circle cx="16" cy="15" r="4.5" fill="white"/>
+        <circle cx="16" cy="15" r="2" fill="#2563eb"/>
+      </svg>
+      <span class="sb-name">Nitin Sangwan</span>
+    </div>
+
+    <hr class="sb-divider">
+
+    <p class="sb-bio">
+      A product designer who cares about what people use, understand, and remember.
+      Currently designing AI-driven workforce management tools for frontline teams at
+      <a href="#">Hunar.ai</a>.
+    </p>
+
+    <hr class="sb-divider">
+
+    <ul class="sb-nav">
+      <li>
+        <button onclick="showPage('home')" class="active" id="nav-home">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Work
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li>
+        <button onclick="showPage('about')" id="nav-about">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><polygon points="6,1 11,10.5 1,10.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          About
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li>
+        <button onclick="showPage('resume')" id="nav-resume">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Resume
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li>
+        <button onclick="showPage('contact')" id="nav-contact">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Contact
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HOME: Force Graph -->
+    <div class="page active" id="page-home">
+      <svg id="graph-svg"></svg>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="page" id="page-about">
+      <div class="win-chrome">
+        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+        <div class="win-title"><strong>About</strong><span class="win-crumb-sep">·</span>Who I am</div>
+        <span class="win-right">About</span>
+      </div>
+      <div class="page-inner">
+        <p class="about-hero">The Internet is an ocean, and you somehow landed on my little island!</p>
+        <p class="about-bio">I'm a multidisciplinary designer who cares deeply about how things are understood, used, and remembered. If I see a user come across my work, and say hmm…this is nice, it makes my day!</p>
+        <p class="about-bio">Beyond work, I enjoy chasing mountains, reading philosophy, watching films that linger, or planning the next climb that scares me a little.</p>
+        <p class="about-bio">I'm drawn to ideas that test human limits — in technology, in stories, and in real life.</p>
+
+        <p class="sec-label">Experience</p>
+        <div class="exp-item">
+          <div><div class="exp-company">Hunar.ai</div><div class="exp-role">Designer</div><div class="exp-desc">At Hunar, I design end-to-end experiences for AI-driven hiring products. I map workflows, design solutions for sourcing, screening, and interviews, and translate complex automation into usable systems.</div></div>
+          <div class="exp-date">Jan 2025 – Present</div>
+        </div>
+        <div class="exp-item">
+          <div><div class="exp-company">Unthinkable Solutions</div><div class="exp-role">Product Design Intern</div><div class="exp-desc">Engaged in multiple design projects, working closely with clients and contributing to UI, 3D design, and motion graphics.</div></div>
+          <div class="exp-date">Jun – Aug 2024</div>
+        </div>
+        <div class="exp-item">
+          <div><div class="exp-company">NS Ventures</div><div class="exp-role">Product Design Intern</div><div class="exp-desc">Member of the product design team for 'Dazr Drones', contributing to a seamless user experience and the successful market launch.</div></div>
+          <div class="exp-date">May – Aug 2022</div>
+        </div>
+        <div class="exp-item">
+          <div><div class="exp-company">Arréba</div><div class="exp-role">Graphic Designer</div><div class="exp-desc">Crafting visually compelling designs, fostering brand consistency, and enhancing user engagement.</div></div>
+          <div class="exp-date">Jul 2022 – Apr 2023</div>
+        </div>
+        <div class="exp-item">
+          <div><div class="exp-company">Patni Mobility</div><div class="exp-role">Design Intern</div><div class="exp-desc">Interned at a startup in the transportation industry, contributing to graphic design projects and brand development.</div></div>
+          <div class="exp-date">Apr – Jun 2022</div>
+        </div>
+        <div class="exp-item">
+          <div><div class="exp-company">Freelance</div><div class="exp-role">Web Design & Development</div><div class="exp-desc">Regular freelance work for web design, development, and branding with teams of all sizes.</div></div>
+          <div class="exp-date">Jan 2020 – Present</div>
+        </div>
+
+        <p class="sec-label">Values</p>
+        <div class="values-grid">
+          <div class="value-card">Ask Better Questions</div>
+          <div class="value-card">Stay Restless</div>
+          <div class="value-card">Obsession Builds, What Motivation Can't.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUME -->
+    <div class="page" id="page-resume">
+      <div class="win-chrome">
+        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+        <div class="win-title"><strong>Resume</strong><span class="win-crumb-sep">·</span>Download or preview</div>
+        <span class="win-right">Resume</span>
+      </div>
+      <div class="page-inner">
+        <div class="resume-tabs">
+          <button class="tab-btn active" onclick="switchTab(this,'tab-design')">Design Resume</button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-fullstack')">Full Stack Resume</button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-motion')">Motion Resume</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-design">
+          <button class="export-btn" onclick="window.print()">↓ Export PDF</button>
+          <p class="res-sec">Experience</p>
+          <div class="res-item"><div><div class="ri-title">Hunar.ai — Designer</div><div class="ri-desc">End-to-end product design for AI-driven hiring tools. Design system, component libraries, and 3D assets.</div></div><div class="ri-date">2025–Present</div></div>
+          <div class="res-item"><div><div class="ri-title">Unthinkable Solutions — Design Intern</div><div class="ri-desc">UI/UX across multiple client projects; 3D design and motion graphics.</div></div><div class="ri-date">2024</div></div>
+          <div class="res-item"><div><div class="ri-title">Freelance — Web Design & Dev</div><div class="ri-desc">Brand identities, web design, and development for teams of all sizes.</div></div><div class="ri-date">2020–Present</div></div>
+          <p class="res-sec">Skills</p>
+          <div class="skills-wrap">
+            <span class="skill-tag">Figma</span><span class="skill-tag">Framer</span><span class="skill-tag">Spline 3D</span><span class="skill-tag">After Effects</span><span class="skill-tag">Illustrator</span><span class="skill-tag">Photoshop</span><span class="skill-tag">HTML / CSS</span><span class="skill-tag">JavaScript</span><span class="skill-tag">React</span><span class="skill-tag">Prototyping</span><span class="skill-tag">Design Systems</span><span class="skill-tag">User Research</span>
+          </div>
+          <p class="res-sec">Education</p>
+          <div class="res-item"><div><div class="ri-title">B.Des — Product Design</div><div class="ri-sub">SRM Institute of Science and Technology</div></div><div class="ri-date">2020–2024</div></div>
+        </div>
+
+        <div class="tab-panel" id="tab-fullstack">
+          <button class="export-btn">↓ Export PDF</button>
+          <p class="res-sec">Technical Skills</p>
+          <div class="skills-wrap"><span class="skill-tag">React</span><span class="skill-tag">Next.js</span><span class="skill-tag">TypeScript</span><span class="skill-tag">Node.js</span><span class="skill-tag">Tailwind CSS</span><span class="skill-tag">Framer</span><span class="skill-tag">Webflow</span><span class="skill-tag">Git</span><span class="skill-tag">REST APIs</span></div>
+          <p class="res-sec">Projects</p>
+          <div class="res-item"><div><div class="ri-title">Dimore Surfaces — Web Design & Dev</div><div class="ri-desc">Full design-to-code implementation for a luxury surface brand's marketing site.</div></div><div class="ri-date">2024</div></div>
+        </div>
+
+        <div class="tab-panel" id="tab-motion">
+          <button class="export-btn">↓ Export PDF</button>
+          <p class="res-sec">Motion Work</p>
+          <div class="res-item"><div><div class="ri-title">Hunar.ai — Brand Motion</div><div class="ri-desc">Product reveal videos, UI animations, and onboarding motion sequences.</div></div><div class="ri-date">2025</div></div>
+          <p class="res-sec">Tools</p>
+          <div class="skills-wrap"><span class="skill-tag">After Effects</span><span class="skill-tag">Lottie</span><span class="skill-tag">Rive</span><span class="skill-tag">Spline</span><span class="skill-tag">Principle</span><span class="skill-tag">Framer Animate</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="page" id="page-contact">
+      <div class="win-chrome">
+        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+        <div class="win-title"><strong>Contact</strong><span class="win-crumb-sep">·</span>Get in touch</div>
+        <span class="win-right">Contact</span>
+      </div>
+      <div class="page-inner">
+        <h2 class="contact-h">My inbox is open</h2>
+        <p class="contact-sub">Have an idea, a project, or just want to talk mountains and movies? Drop a message!</p>
+        <div class="contact-grid">
+          <div class="ci-items">
+            <div><div class="ci-label">Email</div><div class="ci-val"><a href="mailto:nitinsangwan0105@gmail.com">nitinsangwan0105@gmail.com</a></div></div>
+            <div><div class="ci-label">LinkedIn</div><div class="ci-val"><a href="#">nitinsangwan531</a></div></div>
+            <div><div class="ci-label">Framer</div><div class="ci-val"><a href="#">@nitin-sangwan</a></div></div>
+            <hr style="border:none;border-top:1px solid var(--border)">
+            <div><div class="ci-label">Currently in</div><div class="ci-val">Bengaluru, India</div></div>
+            <div><div class="ci-label">Local time</div><div class="ci-val" id="local-time">—</div></div>
+          </div>
+          <div class="cf">
+            <div><label>Name</label><input type="text" placeholder="Jane Smith"></div>
+            <div><label>Email</label><input type="email" placeholder="jane@work.com"></div>
+            <div><label>Message</label><textarea placeholder="Hi Nitin, I wanna reach out..."></textarea></div>
+            <button class="send-btn" onclick="handleSend(this)">Send message</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── NAV ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const btn = document.getElementById('nav-' + id);
+  if (btn) btn.classList.add('active');
+  if (id === 'home') { setTimeout(initGraph, 60); }
+}
+
+// ── TABS ──
+function switchTab(btn, panelId) {
+  btn.closest('.page-inner').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.closest('.page-inner').querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── CONTACT SEND ──
+function handleSend(btn) {
+  btn.textContent = '✓ Message sent!';
+  btn.style.background = '#16a34a';
+  setTimeout(() => { btn.textContent = 'Send message'; btn.style.background = ''; }, 3000);
+}
+
+// ── LOCAL TIME ──
+function updateTime() {
+  const el = document.getElementById('local-time');
+  if (!el) return;
+  el.textContent = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' IST';
+}
+updateTime(); setInterval(updateTime, 30000);
+
+// ── FORCE GRAPH ──
+let graphInited = false;
+
+function initGraph() {
+  if (graphInited) return;
+  graphInited = true;
+
+  const container = document.getElementById('page-home');
+  const W = container.clientWidth || window.innerWidth - 292;
+  const H = container.clientHeight || window.innerHeight;
+
+  const svg = d3.select('#graph-svg')
+    .attr('width', W).attr('height', H)
+    .attr('viewBox', `0 0 ${W} ${H}`);
+
+  const CX = W / 2, CY = H / 2;
+
+  // Node definitions
+  const nodes = [
+    { id: 'center',    label: 'Nitin Sangwan', sub: 'India',           shape: 'star', fx: CX,   fy: CY },
+    // hexagons = projects
+    { id: 'hv',        label: 'Hunar Voice',         shape: 'hex',  page: 'home' },
+    { id: 'hc',        label: 'Hunar Connect',        shape: 'hex',  page: 'home' },
+    { id: 'ds',        label: 'Dimore Surfaces',      shape: 'hex',  page: 'home' },
+    { id: 'dp',        label: 'Dental PMS',           shape: 'hex',  page: 'home' },
+    { id: 'np',        label: "Neha's Playground",    shape: 'hex',  page: 'home' },
+    { id: 'vp',        label: 'Voice AI Playground',  shape: 'hex',  page: 'home' },
+    // triangles = info pages
+    { id: 'n-about',   label: 'About',      shape: 'tri', page: 'about'  },
+    { id: 'n-resume',  label: 'Resume',     shape: 'tri', page: 'resume' },
+    { id: 'toolkit',   label: 'Tool Kit',   shape: 'tri', page: 'about'  },
+    { id: 'exp',       label: 'Experience', shape: 'tri', page: 'about'  },
+    // squares = misc
+    { id: 'work',      label: 'Work',        shape: 'sq', page: 'home'    },
+    { id: 'read',      label: 'Read',        shape: 'sq', page: 'about'   },
+    { id: 'listen',    label: 'Listen',      shape: 'sq', page: 'about'   },
+    { id: 'watch',     label: 'Watch',       shape: 'sq', page: 'about'   },
+    { id: 'bucket',    label: 'Bucket List', shape: 'sq', page: 'about'   },
+  ];
+
+  // Spread initial positions in a rough ring
+  const nonCenter = nodes.filter(n => !n.fx);
+  nonCenter.forEach((n, i) => {
+    const angle = (i / nonCenter.length) * Math.PI * 2 - Math.PI / 2;
+    const dist = 190 + Math.random() * 70;
+    n.x = CX + Math.cos(angle) * dist;
+    n.y = CY + Math.sin(angle) * dist;
+  });
+
+  const links = nonCenter.map(n => ({ source: 'center', target: n.id }));
+
+  // Force simulation
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(165).strength(0.35))
+    .force('charge', d3.forceManyBody().strength(-100))
+    .force('collision', d3.forceCollide(52))
+    .force('center', d3.forceCenter(CX, CY).strength(0.02))
+    .alphaDecay(0.018);
+
+  // Boundary clamp
+  const PAD = 72;
+  sim.on('tick', () => {
+    nodes.forEach(n => {
+      if (n.fx !== undefined) return;
+      n.x = Math.max(PAD, Math.min(W - PAD, n.x));
+      n.y = Math.max(PAD, Math.min(H - PAD, n.y));
+    });
+    linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+           .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    nodeG.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // Draw links
+  const linkSel = svg.append('g')
+    .selectAll('line').data(links).join('line').attr('class', 'link-line');
+
+  // Draw node groups
+  const nodeG = svg.append('g')
+    .selectAll('g').data(nodes).join('g')
+    .attr('cursor', d => d.page ? 'pointer' : 'default')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.25).restart(); if (!d.fx) { d.fx = d.x; d.fy = d.y; } })
+      .on('drag',  (e, d) => { if (!d.label?.includes('Nitin')) { d.fx = e.x; d.fy = e.y; } })
+      .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); if (!nodes.find(n=>n.id===d.id)?.fx || d.id !== 'center') { d.fx = null; d.fy = null; } })
+    )
+    .on('click', (e, d) => { if (d.page) showPage(d.page); });
+
+  // Shape rendering per node
+  nodeG.each(function(d) {
+    const g = d3.select(this);
+    if (d.shape === 'star') {
+      g.append('circle').attr('r', 22).attr('fill', '#2563eb');
+      g.append('polygon').attr('points', starPts(0,0,19,9,12)).attr('fill', '#1d4ed8');
+      g.append('circle').attr('r', 6.5).attr('fill', 'white');
+      g.append('circle').attr('r', 2.8).attr('fill', '#2563eb');
+    } else if (d.shape === 'hex') {
+      g.append('polygon').attr('points', hexPts(0, 0, 14)).attr('class', 'node-shape');
+    } else if (d.shape === 'tri') {
+      g.append('polygon').attr('points', triPts(0, 0, 13)).attr('class', 'node-shape');
+    } else { // sq
+      g.append('rect').attr('x',-11).attr('y',-11).attr('width',22).attr('height',22).attr('class','node-shape');
+    }
+  });
+
+  // Primary labels
+  nodeG.append('text')
+    .attr('class', 'node-label')
+    .attr('y', d => d.shape === 'star' ? 36 : 27)
+    .attr('text-anchor', 'middle')
+    .text(d => d.label);
+
+  // Sublabels (location under center)
+  nodeG.filter(d => d.sub).append('text')
+    .attr('class', 'node-label node-sublabel')
+    .attr('y', 50).attr('text-anchor', 'middle')
+    .text(d => `📍 ${d.sub}`);
+
+  // ── Shape helpers ──
+  function hexPts(cx, cy, r) {
+    return Array.from({length:6}, (_,i) => {
+      const a = Math.PI/3*i - Math.PI/6;
+      return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
+    }).join(' ');
+  }
+  function triPts(cx, cy, r) {
+    return [0,1,2].map(i => {
+      const a = Math.PI*2/3*i - Math.PI/2;
+      return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
+    }).join(' ');
+  }
+  function starPts(cx, cy, ro, ri, n) {
+    return Array.from({length:n*2}, (_,i) => {
+      const r = i%2===0 ? ro : ri;
+      const a = Math.PI/n*i - Math.PI/2;
+      return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
+    }).join(' ');
+  }
+}
+
+window.addEventListener('load', () => setTimeout(initGraph, 80));
+window.addEventListener('resize', () => { graphInited = false; document.querySelector('#graph-svg').innerHTML = ''; initGraph(); });
+</script>
+</body>
+</html>
