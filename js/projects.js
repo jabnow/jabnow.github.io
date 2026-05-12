@@ -13,6 +13,7 @@
 
   let currentFilter = 'all';
   let currentLabel = 'All files';
+  const desktopRoot = 'Desktop';
 
   const sortCards = () => {
     const sorted = [...cards].sort((a, b) => {
@@ -43,7 +44,7 @@
       }
     });
 
-    pathLine.textContent = `Path: Desktop / ${currentLabel}`;
+    pathLine.textContent = `Path: ${desktopRoot} / ${currentLabel}`;
     results.textContent = `Showing ${visibleCount} project${visibleCount === 1 ? '' : 's'}`;
   };
 
