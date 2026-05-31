@@ -275,7 +275,7 @@
           <button type="button" class="ghost-btn" id="resume-export-pdf" aria-label="Download ATS-friendly PDF">Download PDF</button>
         </div>
         <div class="guest-preview-bar editor-only" id="resume-preview-bar" hidden>
-          <p class="guest-preview-bar__label">Guest preview — this is how visitors see this résumé.</p>
+          <p class="guest-preview-bar__label">Saved — previewing your changes.</p>
           <button type="button" class="send-btn" id="resume-preview-edit">Edit</button>
         </div>
         <article id="resume-content" class="resume-ats" aria-label="Resume content"></article>
@@ -285,13 +285,9 @@
           <form id="resume-editor-form" class="cf">
             <div class="cf-row">
               <div><label for="resume-edit-name">Full name</label><input id="resume-edit-name" name="name" required /></div>
-              <div><label for="resume-edit-location">Location</label><input id="resume-edit-location" name="location" placeholder="City, State, Country" /></div>
-            </div>
-            <div class="cf-row">
-              <div><label for="resume-edit-phone">Phone</label><input id="resume-edit-phone" name="phone" /></div>
-              <div><label for="resume-edit-email">Email</label><input id="resume-edit-email" name="email" type="email" /></div>
             </div>
             <div><label for="resume-edit-summary">Summary (optional)</label><textarea id="resume-edit-summary" name="summary" rows="2"></textarea></div>
+            <p class="page-editor__hint">Personal contact details are edited on the Contact page.</p>
             <p class="sec-label">Education</p>
             <div id="resume-education-list" class="repeat-list"></div>
             <button type="button" class="ghost-btn repeat-add" id="resume-add-education">+ Add education</button>
@@ -317,26 +313,54 @@
         <div class="win-title"><strong>Contact</strong><span class="win-crumb-sep">·</span>Get in touch</div>
         <span class="win-right">Contact</span>
       </div>
-      <div class="page-inner">
-        <h2 class="contact-h">Say hello</h2>
-        <p class="contact-sub">Questions about a project, collaboration, or anything else — reach out using the form below.</p>
+      <div class="page-inner page-inner--contact">
+        <div class="contact-layout">
+          <h2 class="contact-h contact-layout__intro" id="contact-headline">My inbox is open</h2>
+          <p class="contact-sub contact-layout__intro" id="contact-subhead">Have an idea, a project, or just want to talk? Drop a message!</p>
 
-        <div class="profile-switcher" id="contact-profile-switcher">
-          <span class="profile-switcher__label">Contact as</span>
-          <div class="check-grid" id="contact-profile-options" role="group" aria-label="Contact profiles"></div>
+          <div class="contact-info">
+            <dl class="contact-details" id="contact-details" aria-label="Contact details"></dl>
+            <div class="contact-location" id="contact-location" hidden></div>
+          </div>
+
+          <div class="contact-form-panel">
+            <form id="contact-form" class="cf contact-form-card">
+              <div class="cf-row">
+                <div><label for="contact-name">Name</label><input id="contact-name" name="name" required placeholder="bob builder" /></div>
+                <div><label for="contact-email">Email</label><input id="contact-email" name="email" type="email" required placeholder="bobbuilds@work.com" /></div>
+              </div>
+              <div><label for="contact-message">Message</label><textarea id="contact-message" name="message" rows="5" required placeholder="Hi, I wanted to reach out…"></textarea></div>
+              <div class="cf-actions">
+                <button type="submit" class="send-btn">Send message</button>
+                <span id="contact-toast" class="toast"></span>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <form id="contact-form" class="cf">
-          <div class="cf-row">
-            <div><label for="contact-name">Name</label><input id="contact-name" name="name" required /></div>
-            <div><label for="contact-email">Email</label><input id="contact-email" name="email" type="email" required /></div>
-          </div>
-          <div><label for="contact-message">Message</label><textarea id="contact-message" name="message" rows="5" required></textarea></div>
-          <div class="cf-actions">
-            <button type="submit" class="send-btn">Send message</button>
-            <span id="contact-toast" class="toast"></span>
-          </div>
-        </form>
+        <section class="page-editor editor-only" id="contact-editor-panel" hidden aria-label="Edit contact details">
+          <h3 class="page-editor__title">Edit contact details</h3>
+          <p class="page-editor__hint">Personal info shown on the contact page. Uses the first public contact profile from Share settings.</p>
+          <form id="contact-editor-form" class="cf">
+            <div><label for="contact-edit-headline">Headline</label><input id="contact-edit-headline" name="headline" required /></div>
+            <div><label for="contact-edit-subhead">Subhead</label><textarea id="contact-edit-subhead" name="subhead" rows="2"></textarea></div>
+            <div class="cf-row">
+              <div><label for="contact-edit-email">Email</label><input id="contact-edit-email" name="email" type="email" /></div>
+              <div><label for="contact-edit-phone">Phone</label><input id="contact-edit-phone" name="phone" /></div>
+            </div>
+            <div class="cf-row">
+              <div><label for="contact-edit-location">Location</label><input id="contact-edit-location" name="location" placeholder="City, State, Country" /></div>
+              <div><label for="contact-edit-timezone">Timezone (IANA)</label><input id="contact-edit-timezone" name="timezone" placeholder="America/New_York" /></div>
+            </div>
+            <p class="sec-label">Other links</p>
+            <div id="contact-links-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="contact-add-link">+ Add link</button>
+            <div class="cf-actions">
+              <button type="submit" class="send-btn">Save contact</button>
+              <span id="contact-editor-toast" class="toast"></span>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
 
@@ -412,25 +436,31 @@
         <div class="win-title"><strong>About</strong><span class="win-crumb-sep">·</span><span id="about-profile-label">Jabnow</span></div>
         <span class="win-right">About</span>
       </div>
-      <div class="page-inner">
+      <div class="page-inner page-inner--about">
         <div class="profile-switcher">
           <label for="about-profile-select">Profile</label>
           <select id="about-profile-select" aria-label="Select about profile"></select>
         </div>
         <div class="guest-preview-bar editor-only" id="about-preview-bar" hidden>
-          <p class="guest-preview-bar__label">Guest preview — this is how visitors see this page.</p>
+          <p class="guest-preview-bar__label">Saved — previewing your changes.</p>
           <button type="button" class="send-btn" id="about-preview-edit">Edit</button>
         </div>
         <article id="about-content" aria-label="About content"></article>
         <section class="page-editor editor-only" id="about-editor-panel" hidden aria-label="Edit about page">
           <h3 class="page-editor__title">Edit about</h3>
           <form id="about-editor-form" class="cf">
-            <div><label for="about-edit-hero">Hero</label><input id="about-edit-hero" name="hero" required /></div>
-            <div><label for="about-edit-body">Body (one paragraph per line)</label><textarea id="about-edit-body" name="body" rows="4" required></textarea></div>
-            <div><label for="about-edit-stack">Stack cards (comma separated)</label><input id="about-edit-stack" name="stack" placeholder="Vanilla HTML, D3, localStorage" /></div>
-            <p class="sec-label">Other links</p>
-            <div id="about-links-list" class="repeat-list"></div>
-            <button type="button" class="ghost-btn repeat-add" id="about-add-link">+ Add link</button>
+            <div><label for="about-edit-hero">Headline</label><input id="about-edit-hero" name="hero" required /></div>
+            <div><label for="about-edit-body">Brief description (one paragraph per line)</label><textarea id="about-edit-body" name="body" rows="4" required></textarea></div>
+            <div class="cf-row">
+              <div><label for="about-edit-photo">Photo URL</label><input id="about-edit-photo" name="photo" placeholder="https://… or upload →" /></div>
+              <div><label for="about-photo-file">Upload photo</label><input type="file" id="about-photo-file" accept="image/*" /></div>
+            </div>
+            <p class="sec-label">Books I like</p>
+            <div id="about-books-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="about-add-book">+ Add book</button>
+            <p class="sec-label">Songs I like</p>
+            <div id="about-songs-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="about-add-song">+ Add song</button>
             <div class="cf-actions">
               <button type="submit" class="send-btn">Save about</button>
               <span id="about-editor-toast" class="toast"></span>

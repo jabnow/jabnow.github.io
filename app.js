@@ -30,6 +30,65 @@ const emptyEducation = () => ({ school: "", location: "", degree: "", date: "", 
 const emptyExperience = () => ({ company: "", location: "", role: "", date: "", bullets: [] });
 const emptySkillSection = () => ({ title: "", content: "" });
 const emptyAboutLink = () => ({ label: "", url: "" });
+const emptyBook = () => ({ title: "", author: "", coverUrl: "", url: "" });
+const emptySong = () => ({ title: "", artist: "", url: "" });
+
+const DEFAULT_BOOKS = [
+  {
+    title: "Sapiens: A Brief History of Humankind",
+    author: "Yuval Noah Harari",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780062316097-L.jpg"
+  },
+  {
+    title: "When Breath Becomes Air",
+    author: "Paul Kalanithi",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780812988406-L.jpg"
+  },
+  {
+    title: "Never Let Me Go",
+    author: "Kazuo Ishiguro",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9781400078776-L.jpg"
+  },
+  {
+    title: "xkcd.com",
+    author: "Daily comic",
+    coverUrl: "https://imgs.xkcd.com/comics/duty_calls.png",
+    url: "https://xkcd.com/#"
+  }
+];
+
+const DEFAULT_SONGS = [
+  {
+    title: "Stand Out Fit In",
+    artist: "ONE OK ROCK",
+    url: "https://music.youtube.com/watch?v=DowLEpo7A18&si=kz1Yks69SVEZdSyB"
+  },
+  {
+    title: "Take Me To You",
+    artist: "GOT7",
+    url: "https://music.youtube.com/watch?v=g2n0jMXgsDE&si=pJ019NtPH_a0iVn4"
+  },
+  {
+    title: "death bed (coffee for your head)",
+    artist: "Powfu",
+    url: "https://music.youtube.com/watch?v=JApegyYlvyY&si=nBK2cTOujt_-iryy"
+  },
+  {
+    title: "OVERTIME",
+    artist: "haruno",
+    url: "https://music.youtube.com/watch?v=NjXYmfF0I98&si=P1Fg3TVhq_QHKzjs"
+  },
+  {
+    title: "Be Kind",
+    artist: "Marshmello & Halsey",
+    url: "https://music.youtube.com/watch?v=qGayx0PQ6J0&si=5Rt9Hp5r-yYluS7p"
+  },
+  {
+    title: "Someday",
+    artist: "The Strokes",
+    url: "https://music.youtube.com/watch?v=eArVJFjd6S0&si=_KphVKmPVmkG1WaB"
+  }
+];
 
 const JABNOW_SAMPLE_RESUME = {
   name: "Joy Wang",
@@ -87,12 +146,85 @@ const JABNOW_SAMPLE_RESUME = {
   ]
 };
 
+const migrateLegacyBooks = books => {
+  if (!Array.isArray(books) || !books.length) return books;
+  const legacyTitles = new Set(["Sapiens", "Sophie's World", "The White Tiger", "Annapurna"]);
+  const allLegacy = books.length === 4 && books.every(b => legacyTitles.has(b.title) && !b.coverUrl);
+  if (allLegacy) return JSON.parse(JSON.stringify(DEFAULT_BOOKS));
+  return books;
+};
+
+const migrateLegacySongs = songs => {
+  if (!Array.isArray(songs) || !songs.length) return songs;
+  const legacyTitles = new Set([
+    "Ghost in Town",
+    "Bless The Telephone",
+    "Vachari",
+    "Tears Over Beers",
+    "Mohtarma"
+  ]);
+  const onlyLegacy = songs.every(s => legacyTitles.has(s.title) || s.title === "death bed (coffee for your head)");
+  const matchesOldDefault = songs.length === 6 && onlyLegacy;
+  if (matchesOldDefault) return JSON.parse(JSON.stringify(DEFAULT_SONGS));
+  const legacy5Titles = new Set([
+    "Ghost in Town",
+    "death bed (coffee for your head)",
+    "Bless The Telephone",
+    "Vachari",
+    "Tears Over Beers"
+  ]);
+  if (songs.length === 5 && songs.every(s => legacy5Titles.has(s.title))) {
+    return JSON.parse(JSON.stringify(DEFAULT_SONGS));
+  }
+  const matchesDefaultTitles = songs.length === DEFAULT_SONGS.length
+    && songs.every((s, i) => s.title === DEFAULT_SONGS[i].title);
+  if (matchesDefaultTitles && songs.some(s => !s.url)) {
+    return JSON.parse(JSON.stringify(DEFAULT_SONGS));
+  }
+  return songs;
+};
+
 const normalizeAboutContent = (about, key) => {
   const base = about || {};
+  const rawBooks = Array.isArray(base.books) ? migrateLegacyBooks(base.books) : [];
+  const rawSongs = Array.isArray(base.songs) ? migrateLegacySongs(base.songs) : [];
   return {
     hero: String(base.hero || "").trim(),
     body: Array.isArray(base.body) ? base.body.map(String) : splitLines(base.body),
+    photo: String(base.photo || "").trim(),
     stack: Array.isArray(base.stack) ? base.stack.map(String) : splitCsv(base.stack),
+    links: Array.isArray(base.links)
+      ? base.links.filter(l => l && (l.label || l.url)).map(l => ({
+        label: String(l.label || l.url || "").trim(),
+        url: String(l.url || "").trim()
+      }))
+      : [],
+    books: rawBooks
+      .filter(b => b && (b.title || b.coverUrl)).map(b => ({
+        title: String(b.title || "").trim(),
+        author: String(b.author || "").trim(),
+        coverUrl: String(b.coverUrl || b.cover || "").trim(),
+        url: String(b.url || "").trim()
+      })),
+    songs: rawSongs
+      .filter(s => s && s.title).map(s => ({
+        title: String(s.title || "").trim(),
+        artist: String(s.artist || "").trim(),
+        url: String(s.url || "").trim()
+      }))
+  };
+};
+
+const normalizeContactContent = (contact, key, resume) => {
+  const base = contact || {};
+  const r = resume || {};
+  return {
+    headline: String(base.headline || "My inbox is open").trim(),
+    subhead: String(base.subhead || "Have an idea, a project, or just want to talk? Drop a message!").trim(),
+    email: String(base.email || r.email || "").trim(),
+    phone: String(base.phone || r.phone || "").trim(),
+    location: String(base.location || r.location || "").trim(),
+    timezone: String(base.timezone || "America/New_York").trim(),
     links: Array.isArray(base.links)
       ? base.links.filter(l => l && (l.label || l.url)).map(l => ({
         label: String(l.label || l.url || "").trim(),
@@ -175,9 +307,24 @@ const defaultProfileContent = key => {
         : [`${branchName} projects`, "Case studies", "Selected tools"],
       links: key === "jabnow"
         ? [
-            { label: "LinkedIn", url: "https://linkedin.com/in/" },
+            { label: "LinkedIn", url: "https://www.linkedin.com/in/wang-joy/" },
             { label: "GitHub", url: "https://github.com/jabnow" }
           ]
+        : [],
+      books: key === "jabnow" ? JSON.parse(JSON.stringify(DEFAULT_BOOKS)) : [],
+      songs: key === "jabnow" ? JSON.parse(JSON.stringify(DEFAULT_SONGS)) : []
+    },
+    contact: {
+      headline: "My inbox is open",
+      subhead: key === "jabnow"
+        ? "Have an idea, a project, or just want to talk? Drop a message!"
+        : `Questions about ${branchName.toLowerCase()} work, collaboration, or opportunities?`,
+      email: key === "jabnow" || BRANCH_PROFILE_KEYS.includes(key) ? "joywang@nyu.edu" : "",
+      phone: key === "jabnow" ? "(978) 489-4207" : "",
+      location: key === "jabnow" || BRANCH_PROFILE_KEYS.includes(key) ? "New York, NY, USA" : "",
+      timezone: "America/New_York",
+      links: (key === "jabnow" || BRANCH_PROFILE_KEYS.includes(key))
+        ? [{ label: "LinkedIn", url: "https://linkedin.com/in/" }]
         : []
     },
     resume: key === "jabnow"
@@ -236,9 +383,12 @@ const siteConfigStore = {
     PROFILE_KEYS.forEach(key => {
       const mergedAbout = { ...base.profiles[key].about, ...(patch.profiles?.[key]?.about || {}) };
       const mergedResume = { ...base.profiles[key].resume, ...(patch.profiles?.[key]?.resume || {}) };
+      const mergedContact = { ...(base.profiles[key].contact || {}), ...(patch.profiles?.[key]?.contact || {}) };
+      const resume = normalizeResumeContent(mergedResume, key);
       profiles[key] = {
         about: normalizeAboutContent(mergedAbout, key),
-        resume: normalizeResumeContent(mergedResume, key)
+        resume,
+        contact: normalizeContactContent(mergedContact, key, resume)
       };
     });
     return {
@@ -559,6 +709,15 @@ const refs = {
   projectDetailEdit: document.getElementById("project-detail-edit"),
   contactForm: document.getElementById("contact-form"),
   contactToast: document.getElementById("contact-toast"),
+  contactHeadline: document.getElementById("contact-headline"),
+  contactSubhead: document.getElementById("contact-subhead"),
+  contactDetails: document.getElementById("contact-details"),
+  contactLocation: document.getElementById("contact-location"),
+  contactEditorPanel: document.getElementById("contact-editor-panel"),
+  contactEditorForm: document.getElementById("contact-editor-form"),
+  contactLinksList: document.getElementById("contact-links-list"),
+  contactAddLink: document.getElementById("contact-add-link"),
+  contactEditorToast: document.getElementById("contact-editor-toast"),
   sbLogo: document.getElementById("sb-logo"),
   sbStarburst: document.getElementById("sb-starburst"),
   sbBio: document.getElementById("sb-bio"),
@@ -605,6 +764,11 @@ const refs = {
   aboutEditorForm: document.getElementById("about-editor-form"),
   aboutLinksList: document.getElementById("about-links-list"),
   aboutAddLink: document.getElementById("about-add-link"),
+  aboutBooksList: document.getElementById("about-books-list"),
+  aboutSongsList: document.getElementById("about-songs-list"),
+  aboutAddBook: document.getElementById("about-add-book"),
+  aboutAddSong: document.getElementById("about-add-song"),
+  aboutPhotoFile: document.getElementById("about-photo-file"),
   aboutEditorToast: document.getElementById("about-editor-toast"),
   resumeEditorPanel: document.getElementById("resume-editor-panel"),
   resumeEditorForm: document.getElementById("resume-editor-form"),
@@ -732,10 +896,14 @@ const updateStatusFooter = () => {
   setStatus("ok", `Saved locally · ${state.projects.length} project${state.projects.length === 1 ? "" : "s"}`);
 };
 
-const GUEST_BIO = "A filing cabinet for past projects and WIPs. Browse the graph, search the list, and explore project details.";
+const GUEST_BIO = "A filing cabinet for past projects and WIPs. Open projects from the graph or All projects — the sidebar lists only the full catalog.";
 const EDITOR_BIO = "Editor mode — add projects, edit details, or update site content. Everything is saved to this browser's storage.";
 
 const applyProfileUI = () => {
+  if (!isEditor()) {
+    state.aboutEditPreview = false;
+    state.resumeEditPreview = false;
+  }
   document.body.classList.toggle("profile-editor", isEditor());
   document.body.classList.toggle("share-view", isShareView());
   refs.sbBio.textContent = isEditor() ? EDITOR_BIO : GUEST_BIO;
@@ -749,7 +917,7 @@ const applyProfileUI = () => {
   renderList();
   renderAboutPage();
   renderResumePage();
-  renderContactProfiles();
+  renderContactPage();
   if (isEditor()) renderSharePage();
   if (state.viewingProjectId) {
     const project = state.projects.find(p => p.id === state.viewingProjectId);
@@ -811,6 +979,405 @@ const fillProfileSelect = (select, currentKey) => {
   else if (enabled.length) select.value = enabled[0].key;
 };
 
+const formatLocalTime = timezone => {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: timezone || "America/New_York"
+    }).format(new Date());
+  } catch {
+    return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date());
+  }
+};
+
+const truncateText = (text, max) => {
+  const s = String(text || "");
+  return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
+};
+
+const extractYoutubeVideoId = url => {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) {
+      return u.pathname.slice(1).split("/")[0] || null;
+    }
+    return u.searchParams.get("v");
+  } catch {
+    const match = String(url).match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+    return match ? match[1] : null;
+  }
+};
+
+let youtubeApiPromise = null;
+const loadYoutubeIframeApi = () => {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (youtubeApiPromise) return youtubeApiPromise;
+  youtubeApiPromise = new Promise(resolve => {
+    const prevReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      prevReady?.();
+      resolve(window.YT);
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  });
+  return youtubeApiPromise;
+};
+
+const ipod = {
+  songs: [],
+  selected: 0,
+  playing: false,
+  ytPlayer: null,
+  ytReady: false,
+  playerInitPromise: null,
+  ui: null,
+  getPlayerHost() {
+    let el = document.getElementById("about-ipod-player-host");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "about-ipod-player-host";
+      el.className = "about-ipod__player-host";
+      el.setAttribute("aria-hidden", "true");
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+};
+
+let ipodUiDetach = null;
+
+const syncIpodPlayingFromPlayer = () => {
+  if (!ipod.ytPlayer || !ipod.ytReady || !window.YT) return;
+  const state = ipod.ytPlayer.getPlayerState();
+  ipod.playing = state === window.YT.PlayerState.PLAYING;
+};
+
+const ipodCurrentVideoId = () => extractYoutubeVideoId(ipod.songs[ipod.selected]?.url);
+
+const ipodNotifyUi = () => {
+  ipod.ui?.paintScreen?.();
+  ipod.ui?.updatePlayBtn?.();
+};
+
+const ipodHandlePlayerStateChange = event => {
+  if (!window.YT) return;
+  if (event.data === window.YT.PlayerState.ENDED) {
+    ipod.selected = (ipod.selected + 1) % ipod.songs.length;
+    ipodPlaySelected(true);
+    return;
+  }
+  if (event.data === window.YT.PlayerState.PLAYING) {
+    ipod.playing = true;
+    ipodNotifyUi();
+  } else if (event.data === window.YT.PlayerState.PAUSED) {
+    ipod.playing = false;
+    ipodNotifyUi();
+  }
+};
+
+const ipodEnsurePlayer = videoId => loadYoutubeIframeApi().then(() => {
+  const playerHost = ipod.getPlayerHost();
+  if (ipod.ytPlayer && ipod.ytReady) {
+    ipod.ytPlayer.loadVideoById(videoId);
+    return ipod.ytPlayer;
+  }
+  if (ipod.playerInitPromise) {
+    return ipod.playerInitPromise.then(player => {
+      player.loadVideoById(videoId);
+      return player;
+    });
+  }
+  ipod.playerInitPromise = new Promise(resolve => {
+    ipod.ytPlayer = new window.YT.Player(playerHost, {
+      height: "1",
+      width: "1",
+      videoId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1
+      },
+      events: {
+        onReady: e => {
+          ipod.ytReady = true;
+          resolve(e.target);
+        },
+        onStateChange: ipodHandlePlayerStateChange
+      }
+    });
+  });
+  return ipod.playerInitPromise;
+});
+
+const ipodPlaySelected = async (autoPlay = true) => {
+  const videoId = ipodCurrentVideoId();
+  if (!videoId) {
+    ipod.playing = false;
+    ipodNotifyUi();
+    return;
+  }
+  try {
+    const player = await ipodEnsurePlayer(videoId);
+    if (autoPlay) player.playVideo();
+    else {
+      ipod.playing = false;
+      ipodNotifyUi();
+    }
+  } catch {
+    ipod.playing = false;
+    ipodNotifyUi();
+  }
+};
+
+const ipodTogglePlay = async () => {
+  const videoId = ipodCurrentVideoId();
+  if (!videoId) return;
+  if (!ipod.ytPlayer || !ipod.ytReady) {
+    await ipodPlaySelected(true);
+    return;
+  }
+  const YT = window.YT;
+  const state = ipod.ytPlayer.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) {
+    ipod.ytPlayer.pauseVideo();
+    ipod.playing = false;
+    ipodNotifyUi();
+    return;
+  }
+  const loadedId = ipod.ytPlayer.getVideoData?.()?.video_id;
+  if (loadedId !== videoId) {
+    await ipodPlaySelected(true);
+  } else {
+    ipod.ytPlayer.playVideo();
+    ipod.playing = true;
+    ipodNotifyUi();
+  }
+};
+
+const ipodPause = () => {
+  if (ipod.ytPlayer?.pauseVideo) ipod.ytPlayer.pauseVideo();
+  ipod.playing = false;
+  ipodNotifyUi();
+};
+
+const renderAboutIpod = (container, songs) => {
+  if (!songs.length) return;
+  ipodUiDetach?.();
+  ipodUiDetach = null;
+
+  ipod.songs = songs;
+  if (ipod.selected >= songs.length) ipod.selected = 0;
+  syncIpodPlayingFromPlayer();
+  if (ipod.ytPlayer?.getVideoData) {
+    const loadedId = ipod.ytPlayer.getVideoData()?.video_id;
+    const matchIdx = songs.findIndex(s => extractYoutubeVideoId(s.url) === loadedId);
+    if (matchIdx >= 0) ipod.selected = matchIdx;
+  }
+
+  const pill = document.createElement("span");
+  pill.className = "about-section-pill";
+  pill.textContent = "Listen";
+  container.appendChild(pill);
+
+  const device = document.createElement("div");
+  device.className = "about-ipod";
+
+  const screen = document.createElement("div");
+  screen.className = "about-ipod__screen about-ipod__screen--all";
+
+  const wheel = document.createElement("div");
+  wheel.className = "about-ipod__wheel";
+  wheel.innerHTML = `
+    <button type="button" class="about-ipod__wheel-btn about-ipod__wheel-btn--menu" aria-label="Menu">MENU</button>
+    <button type="button" class="about-ipod__wheel-btn about-ipod__wheel-btn--prev" aria-label="Previous">⏮</button>
+    <button type="button" class="about-ipod__wheel-btn about-ipod__wheel-btn--next" aria-label="Next">⏭</button>
+    <button type="button" class="about-ipod__wheel-btn about-ipod__wheel-btn--play" aria-label="Play or pause">▶</button>
+    <span class="about-ipod__wheel-ring" aria-hidden="true"></span>
+  `;
+
+  const playBtn = wheel.querySelector(".about-ipod__wheel-btn--play");
+
+  const updatePlayBtn = () => {
+    if (playBtn) playBtn.textContent = ipod.playing ? "⏸" : "▶";
+  };
+
+  const paintScreen = () => {
+    screen.classList.toggle("about-ipod__screen--playing", ipod.playing);
+    const activeSong = ipod.songs[ipod.selected];
+    const statusLabel = ipod.playing && activeSong?.title
+      ? truncateText(activeSong.title, 20)
+      : "All Songs";
+    screen.innerHTML = `
+      <div class="about-ipod__status">
+        <span class="about-ipod__status-play">${ipod.playing ? "⏸" : "▶"}</span>
+        <span class="about-ipod__status-title">${statusLabel}</span>
+        <span class="about-ipod__status-battery" aria-hidden="true">▮▮▮</span>
+      </div>
+      <ul class="about-ipod__tracks" role="listbox" aria-label="Songs"></ul>
+    `;
+    const list = screen.querySelector(".about-ipod__tracks");
+    ipod.songs.forEach((song, idx) => {
+      const li = document.createElement("li");
+      li.className = "about-ipod__track" + (idx === ipod.selected ? " about-ipod__track--active" : "");
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", String(idx === ipod.selected));
+      const label = song.artist ? `${song.title} — ${song.artist}` : song.title;
+      li.textContent = truncateText(label, 32);
+      li.title = label;
+      li.addEventListener("click", () => {
+        if (ipod.selected === idx) ipodTogglePlay();
+        else {
+          ipod.selected = idx;
+          if (ipod.playing) ipodPlaySelected(true);
+          else paintScreen();
+        }
+      });
+      list.appendChild(li);
+    });
+    updatePlayBtn();
+  };
+
+  ipod.ui = { paintScreen, updatePlayBtn };
+
+  wheel.querySelector(".about-ipod__wheel-btn--prev").addEventListener("click", () => {
+    ipod.selected = (ipod.selected - 1 + ipod.songs.length) % ipod.songs.length;
+    if (ipod.playing) ipodPlaySelected(true);
+    else paintScreen();
+  });
+  wheel.querySelector(".about-ipod__wheel-btn--next").addEventListener("click", () => {
+    ipod.selected = (ipod.selected + 1) % ipod.songs.length;
+    if (ipod.playing) ipodPlaySelected(true);
+    else paintScreen();
+  });
+  playBtn.addEventListener("click", () => ipodTogglePlay());
+  wheel.querySelector(".about-ipod__wheel-btn--menu").addEventListener("click", () => {
+    ipodPause();
+    ipod.selected = 0;
+    paintScreen();
+  });
+
+  ipodUiDetach = () => {
+    ipod.ui = null;
+  };
+
+  device.append(screen, wheel);
+  container.appendChild(device);
+  paintScreen();
+};
+
+const makeStackEditorCard = (text, grid) => {
+  const wrap = document.createElement("div");
+  wrap.className = "about-stack-editor__item";
+  const input = document.createElement("textarea");
+  input.className = "value-card about-stack-editor__input";
+  input.rows = 3;
+  input.value = text;
+  input.placeholder = "Stack card text";
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "about-stack-editor__remove";
+  remove.setAttribute("aria-label", "Remove stack card");
+  remove.textContent = "×";
+  remove.addEventListener("click", () => {
+    if (grid.children.length <= 1) {
+      input.value = "";
+      return;
+    }
+    wrap.remove();
+  });
+  wrap.append(input, remove);
+  return wrap;
+};
+
+const readAboutStackEditor = () => [...document.querySelectorAll("#about-stack-editor .about-stack-editor__input")]
+  .map(el => el.value.trim())
+  .filter(Boolean);
+
+const makeLinkEditorCard = (link, list) => {
+  const wrap = document.createElement("div");
+  wrap.className = "about-links-editor__item";
+  const icon = document.createElement("span");
+  icon.className = "about-links-editor__icon";
+  icon.textContent = "↗";
+  icon.setAttribute("aria-hidden", "true");
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.className = "about-links-editor__label";
+  labelInput.placeholder = "Label";
+  labelInput.value = link.label || "";
+  const urlInput = document.createElement("input");
+  urlInput.type = "url";
+  urlInput.className = "about-links-editor__url";
+  urlInput.placeholder = "https://…";
+  urlInput.value = link.url || "";
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "about-links-editor__remove";
+  remove.setAttribute("aria-label", "Remove link");
+  remove.textContent = "×";
+  remove.addEventListener("click", () => {
+    if (list.children.length <= 1) {
+      labelInput.value = "";
+      urlInput.value = "";
+      return;
+    }
+    wrap.remove();
+  });
+  wrap.append(icon, labelInput, urlInput, remove);
+  return wrap;
+};
+
+const readAboutLinksEditor = () => [...document.querySelectorAll("#about-links-editor .about-links-editor__item")]
+  .map(item => ({
+    label: item.querySelector(".about-links-editor__label")?.value.trim() || "",
+    url: item.querySelector(".about-links-editor__url")?.value.trim() || ""
+  }))
+  .filter(l => l.label || l.url);
+
+const makeBookEditorBlock = book => {
+  const block = makeRepeatBlock(
+    [
+      { name: "title", label: "Title" },
+      { name: "author", label: "Author" },
+      { name: "coverUrl", label: "Cover URL", placeholder: "https://… or upload" },
+      { name: "url", label: "Link (optional)", placeholder: "https://…" }
+    ],
+    book,
+    null
+  );
+  const fileWrap = document.createElement("div");
+  const fileLbl = document.createElement("label");
+  fileLbl.textContent = "Cover upload";
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/*";
+  file.addEventListener("change", async () => {
+    const f = file.files?.[0];
+    if (!f) return;
+    try {
+      const url = await readFileAsDataURL(f);
+      const input = block.querySelector('[name="coverUrl"]');
+      if (input) input.value = url;
+    } catch {
+      showToast("Could not read image", "warn");
+    }
+  });
+  fileWrap.append(fileLbl, file);
+  const removeBtn = block.querySelector(".repeat-block__remove");
+  if (removeBtn) block.insertBefore(fileWrap, removeBtn);
+  else block.appendChild(fileWrap);
+  return block;
+};
+
 const renderAboutPage = () => {
   fillProfileSelect(refs.aboutProfileSelect, state.viewingAboutProfile);
   const key = refs.aboutProfileSelect?.value || state.viewingAboutProfile;
@@ -819,57 +1386,180 @@ const renderAboutPage = () => {
   if (!content || !refs.aboutContent) return;
   if (refs.aboutProfileLabel) refs.aboutProfileLabel.textContent = profileLabel(key);
   refs.aboutContent.innerHTML = "";
-  const hero = document.createElement("p");
+
+  const intro = document.createElement("div");
+  intro.className = "about-intro";
+  const introText = document.createElement("div");
+  introText.className = "about-intro__text";
+  const hero = document.createElement("h2");
   hero.className = "about-hero";
   hero.textContent = content.hero;
-  refs.aboutContent.appendChild(hero);
+  introText.appendChild(hero);
   (content.body || []).forEach(text => {
     const p = document.createElement("p");
     p.className = "about-bio";
     p.textContent = text;
-    refs.aboutContent.appendChild(p);
+    introText.appendChild(p);
   });
-  if ((content.stack || []).length) {
+  intro.appendChild(introText);
+  if (content.photo) {
+    const photoWrap = document.createElement("figure");
+    photoWrap.className = "about-intro__photo";
+    const img = document.createElement("img");
+    img.src = content.photo;
+    img.alt = "";
+    img.loading = "lazy";
+    photoWrap.appendChild(img);
+    intro.appendChild(photoWrap);
+  }
+  refs.aboutContent.appendChild(intro);
+
+  if ((content.stack || []).length || (isEditor() && !state.aboutEditPreview)) {
     const stackLabel = document.createElement("p");
     stackLabel.className = "sec-label";
     stackLabel.textContent = "Stack";
     refs.aboutContent.appendChild(stackLabel);
-    const grid = document.createElement("div");
-    grid.className = "values-grid";
-    content.stack.forEach(item => {
-      const card = document.createElement("div");
-      card.className = "value-card";
-      card.textContent = item;
-      grid.appendChild(card);
-    });
-    refs.aboutContent.appendChild(grid);
+
+    if (isEditor() && !state.aboutEditPreview) {
+      const stackEditor = document.createElement("div");
+      stackEditor.className = "about-stack-editor";
+      stackEditor.id = "about-stack-editor";
+      const grid = document.createElement("div");
+      grid.className = "values-grid about-stack-editor__grid";
+      const stackItems = content.stack?.length ? [...content.stack] : [""];
+      stackItems.forEach(text => {
+        grid.appendChild(makeStackEditorCard(text, grid));
+      });
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "ghost-btn repeat-add about-stack-editor__add";
+      addBtn.textContent = "+ Add stack card";
+      addBtn.addEventListener("click", () => {
+        grid.appendChild(makeStackEditorCard("", grid));
+      });
+      stackEditor.append(grid, addBtn);
+      refs.aboutContent.appendChild(stackEditor);
+    } else if ((content.stack || []).length) {
+      const grid = document.createElement("div");
+      grid.className = "values-grid";
+      content.stack.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "value-card";
+        card.textContent = item;
+        grid.appendChild(card);
+      });
+      refs.aboutContent.appendChild(grid);
+    }
   }
-  if ((content.links || []).length) {
+  if ((content.links || []).length || (isEditor() && !state.aboutEditPreview)) {
     const linksLabel = document.createElement("p");
     linksLabel.className = "sec-label";
     linksLabel.textContent = "Links";
     refs.aboutContent.appendChild(linksLabel);
-    const linksWrap = document.createElement("div");
-    linksWrap.className = "about-links";
-    content.links.forEach(link => {
-      const a = document.createElement("a");
-      a.className = "about-link-card";
-      a.href = link.url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.innerHTML = `<span class="about-link-card__icon">↗</span><span class="about-link-card__label">${link.label || link.url}</span>`;
-      linksWrap.appendChild(a);
-    });
-    refs.aboutContent.appendChild(linksWrap);
+
+    if (isEditor() && !state.aboutEditPreview) {
+      const linksEditor = document.createElement("div");
+      linksEditor.className = "about-links-editor";
+      linksEditor.id = "about-links-editor";
+      const list = document.createElement("div");
+      list.className = "about-links-editor__list";
+      const linkItems = content.links?.length ? content.links.map(l => ({ ...l })) : [emptyAboutLink()];
+      linkItems.forEach(link => {
+        list.appendChild(makeLinkEditorCard(link, list));
+      });
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "ghost-btn repeat-add about-links-editor__add";
+      addBtn.textContent = "+ Add link";
+      addBtn.addEventListener("click", () => {
+        list.appendChild(makeLinkEditorCard(emptyAboutLink(), list));
+      });
+      linksEditor.append(list, addBtn);
+      refs.aboutContent.appendChild(linksEditor);
+    } else if ((content.links || []).length) {
+      const linksWrap = document.createElement("div");
+      linksWrap.className = "about-links";
+      content.links.forEach(link => {
+        const a = document.createElement("a");
+        a.className = "about-link-card";
+        a.href = link.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.innerHTML = `<span class="about-link-card__icon">↗</span><span class="about-link-card__label">${link.label || link.url}</span>`;
+        linksWrap.appendChild(a);
+      });
+      refs.aboutContent.appendChild(linksWrap);
+    }
   }
+
+  if ((content.books || []).length || (content.songs || []).length) {
+    const mediaRow = document.createElement("div");
+    mediaRow.className = "about-media-row";
+    if (content.books?.length) {
+      const booksCol = document.createElement("section");
+      booksCol.className = "about-books";
+      const pill = document.createElement("span");
+      pill.className = "about-section-pill";
+      pill.textContent = "Read";
+      booksCol.appendChild(pill);
+      const grid = document.createElement("div");
+      grid.className = "about-books__grid";
+      content.books.forEach(book => {
+        const item = document.createElement("figure");
+        item.className = "about-book";
+        const coverEl = book.coverUrl
+          ? (() => {
+            const img = document.createElement("img");
+            img.src = book.coverUrl;
+            img.alt = book.title;
+            img.loading = "lazy";
+            if (book.url && /xkcd\.com/i.test(book.url)) {
+              img.classList.add("about-book__cover--comic");
+            }
+            return img;
+          })()
+          : (() => {
+            const ph = document.createElement("div");
+            ph.className = "about-book__placeholder";
+            ph.textContent = (book.title || "?").charAt(0).toUpperCase();
+            return ph;
+          })();
+        if (book.url) {
+          const link = document.createElement("a");
+          link.className = "about-book__cover-link";
+          link.href = book.url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.appendChild(coverEl);
+          item.appendChild(link);
+        } else {
+          item.appendChild(coverEl);
+        }
+        const cap = document.createElement("figcaption");
+        cap.innerHTML = `<strong>${book.title || "Untitled"}</strong>${book.author ? `<span>${book.author}</span>` : ""}`;
+        item.appendChild(cap);
+        grid.appendChild(item);
+      });
+      booksCol.appendChild(grid);
+      mediaRow.appendChild(booksCol);
+    }
+    if (content.songs?.length) {
+      const songsCol = document.createElement("section");
+      songsCol.className = "about-songs";
+      renderAboutIpod(songsCol, content.songs);
+      mediaRow.appendChild(songsCol);
+    }
+    refs.aboutContent.appendChild(mediaRow);
+  }
+
   syncAboutEditorUI();
   if (isEditor() && !state.aboutEditPreview) fillAboutEditorForm(key);
 };
 
 const syncAboutEditorUI = () => {
-  const inPreview = isEditor() && state.aboutEditPreview;
-  if (refs.aboutEditorPanel) refs.aboutEditorPanel.hidden = !isEditor() || inPreview;
-  if (refs.aboutPreviewBar) refs.aboutPreviewBar.hidden = !inPreview;
+  const showPreview = isEditor() && state.aboutEditPreview;
+  if (refs.aboutEditorPanel) refs.aboutEditorPanel.hidden = !isEditor() || showPreview;
+  if (refs.aboutPreviewBar) refs.aboutPreviewBar.hidden = !showPreview;
 };
 
 const renderResumeAts = (container, resume) => {
@@ -880,13 +1570,6 @@ const renderResumeAts = (container, resume) => {
   name.className = "resume-ats__name";
   name.textContent = resume.name || "Name";
   header.appendChild(name);
-  const contactParts = [resume.location, [resume.phone, resume.email].filter(Boolean).join(" | ")].filter(Boolean);
-  if (contactParts.length) {
-    const contact = document.createElement("p");
-    contact.className = "resume-ats__contact";
-    contact.textContent = contactParts.join("\n");
-    header.appendChild(contact);
-  }
   container.appendChild(header);
   if (resume.summary) {
     const summary = document.createElement("p");
@@ -895,11 +1578,13 @@ const renderResumeAts = (container, resume) => {
     container.appendChild(summary);
   }
   const addSection = (title, bodyEl) => {
+    const section = document.createElement("section");
+    section.className = "resume-ats__section";
     const h2 = document.createElement("h2");
     h2.className = "resume-ats__section-title";
     h2.textContent = title;
-    container.appendChild(h2);
-    container.appendChild(bodyEl);
+    section.append(h2, bodyEl);
+    container.appendChild(section);
   };
   if ((resume.education || []).length) {
     const wrap = document.createElement("div");
@@ -933,7 +1618,7 @@ const renderResumeAts = (container, resume) => {
     wrap.className = "resume-ats__entries";
     resume.experience.forEach(exp => {
       const entry = document.createElement("div");
-      entry.className = "resume-ats__entry";
+      entry.className = "resume-ats__entry resume-ats__entry--experience";
       const head = document.createElement("div");
       head.className = "resume-ats__entry-head";
       head.innerHTML = `<strong>${exp.company}</strong><span>${exp.location}</span>`;
@@ -959,8 +1644,9 @@ const renderResumeAts = (container, resume) => {
     const wrap = document.createElement("div");
     wrap.className = "resume-ats__skills";
     resume.skillsSections.forEach(sec => {
-      const row = document.createElement("p");
-      row.innerHTML = `<strong>${sec.title}:</strong> ${sec.content}`;
+      const row = document.createElement("div");
+      row.className = "resume-ats__skill-row";
+      row.innerHTML = `<strong>${sec.title}</strong><p>${sec.content}</p>`;
       wrap.appendChild(row);
     });
     addSection("Skills, Activities & Interests", wrap);
@@ -980,9 +1666,9 @@ const renderResumePage = () => {
 };
 
 const syncResumeEditorUI = () => {
-  const inPreview = isEditor() && state.resumeEditPreview;
-  if (refs.resumeEditorPanel) refs.resumeEditorPanel.hidden = !isEditor() || inPreview;
-  if (refs.resumePreviewBar) refs.resumePreviewBar.hidden = !inPreview;
+  const showPreview = isEditor() && state.resumeEditPreview;
+  if (refs.resumeEditorPanel) refs.resumeEditorPanel.hidden = !isEditor() || showPreview;
+  if (refs.resumePreviewBar) refs.resumePreviewBar.hidden = !showPreview;
 };
 
 const makeRepeatBlock = (fields, data, onRemove) => {
@@ -1016,6 +1702,7 @@ const makeRepeatBlock = (fields, data, onRemove) => {
 };
 
 const readRepeatBlocks = (container, fieldMap) => {
+  if (!container) return [];
   const items = [];
   container.querySelectorAll(".repeat-block").forEach(block => {
     const item = {};
@@ -1035,19 +1722,27 @@ const fillAboutEditorForm = key => {
   if (!content) return;
   refs.aboutEditorForm.elements.hero.value = content.hero;
   refs.aboutEditorForm.elements.body.value = (content.body || []).join("\n");
-  refs.aboutEditorForm.elements.stack.value = (content.stack || []).join(", ");
-  if (!refs.aboutLinksList) return;
-  refs.aboutLinksList.innerHTML = "";
-  (content.links?.length ? content.links : [emptyAboutLink()]).forEach(link => {
-    refs.aboutLinksList.appendChild(makeRepeatBlock(
-      [
-        { name: "label", label: "Label" },
-        { name: "url", label: "URL", placeholder: "https://…" }
-      ],
-      link,
-      null
-    ));
-  });
+  refs.aboutEditorForm.elements.photo.value = content.photo || "";
+  if (refs.aboutBooksList) {
+    refs.aboutBooksList.innerHTML = "";
+    (content.books?.length ? content.books : [emptyBook()]).forEach(book => {
+      refs.aboutBooksList.appendChild(makeBookEditorBlock(book));
+    });
+  }
+  if (refs.aboutSongsList) {
+    refs.aboutSongsList.innerHTML = "";
+    (content.songs?.length ? content.songs : [emptySong()]).forEach(song => {
+      refs.aboutSongsList.appendChild(makeRepeatBlock(
+        [
+          { name: "title", label: "Title" },
+          { name: "artist", label: "Artist (optional)" },
+          { name: "url", label: "Link", placeholder: "https://music.youtube.com/…" }
+        ],
+        song,
+        null
+      ));
+    });
+  }
 };
 
 const fillResumeEditorForm = key => {
@@ -1055,9 +1750,6 @@ const fillResumeEditorForm = key => {
   const resume = state.siteConfig.profiles[key]?.resume;
   if (!resume) return;
   refs.resumeEditorForm.elements.name.value = resume.name || "";
-  refs.resumeEditorForm.elements.location.value = resume.location || "";
-  refs.resumeEditorForm.elements.phone.value = resume.phone || "";
-  refs.resumeEditorForm.elements.email.value = resume.email || "";
   refs.resumeEditorForm.elements.summary.value = resume.summary || "";
   const eduFields = [
     { name: "school", label: "School" },
@@ -1094,14 +1786,21 @@ const fillResumeEditorForm = key => {
 const saveAboutEditor = key => {
   if (!refs.aboutEditorForm) return;
   const data = new FormData(refs.aboutEditorForm);
-  const links = readRepeatBlocks(refs.aboutLinksList, [
-    { name: "label" }, { name: "url" }
-  ]).filter(l => l.label || l.url);
+  const links = readAboutLinksEditor();
+  const books = readRepeatBlocks(refs.aboutBooksList, [
+    { name: "title" }, { name: "author" }, { name: "coverUrl" }, { name: "url" }
+  ]).filter(b => b.title || b.coverUrl);
+  const songs = readRepeatBlocks(refs.aboutSongsList, [
+    { name: "title" }, { name: "artist" }, { name: "url" }
+  ]).filter(s => s.title);
   state.siteConfig.profiles[key].about = normalizeAboutContent({
     hero: String(data.get("hero") || "").trim(),
     body: splitLines(data.get("body")),
-    stack: splitCsv(data.get("stack")),
-    links
+    photo: String(data.get("photo") || "").trim(),
+    stack: readAboutStackEditor(),
+    links,
+    books,
+    songs
   }, key);
   persistSiteConfig();
   state.aboutEditPreview = true;
@@ -1113,9 +1812,6 @@ const saveResumeEditor = key => {
   const data = new FormData(refs.resumeEditorForm);
   state.siteConfig.profiles[key].resume = normalizeResumeContent({
     name: String(data.get("name") || "").trim(),
-    location: String(data.get("location") || "").trim(),
-    phone: String(data.get("phone") || "").trim(),
-    email: String(data.get("email") || "").trim(),
     summary: String(data.get("summary") || "").trim(),
     education: readRepeatBlocks(refs.resumeEducationList, [
       { name: "school" }, { name: "location" }, { name: "degree" }, { name: "date" }, { name: "bullets", type: "bullets" }
@@ -1166,7 +1862,10 @@ const exportResumePdf = key => {
   doc.setFontSize(16);
   doc.text(resume.name || "Resume", margin, y);
   y += 18;
-  const contact = [resume.location, [resume.phone, resume.email].filter(Boolean).join(" | ")].filter(Boolean).join("  ·  ");
+  const contactInfo = state.siteConfig.profiles[key]?.contact;
+  const contact = contactInfo
+    ? [contactInfo.location, [contactInfo.phone, contactInfo.email].filter(Boolean).join(" | ")].filter(Boolean).join("  ·  ")
+    : [resume.location, [resume.phone, resume.email].filter(Boolean).join(" | ")].filter(Boolean).join("  ·  ");
   if (contact) addLines(contact, 9, "normal", 6);
   if (resume.summary) addLines(resume.summary, 9, "normal", 8);
   const sectionTitle = title => {
@@ -1277,7 +1976,7 @@ const applyGuestVisibilityChange = () => {
   renderWorkSubmenu();
   renderAboutPage();
   renderResumePage();
-  renderContactProfiles();
+  renderContactPage();
   if (state.currentPage === "home") renderGraph({ rebuild: true });
 };
 
@@ -1325,7 +2024,7 @@ const renderSharePage = () => {
       else set.delete(key);
       state.siteConfig.contactPublicProfiles = [...set];
       persistSiteConfig();
-      renderContactProfiles();
+      renderContactPage();
     }
   );
   updateShareLinkPreview();
@@ -1345,39 +2044,142 @@ const syncGraphBranchSelectOptions = () => {
   else refs.graphBranchSelect.value = state.selectedGraphBranch || "";
 };
 
-const renderContactProfiles = () => {
-  if (!refs.contactProfileOptions) return;
-  const publicProfiles = state.siteConfig.contactPublicProfiles.filter(k => isContentProfileEnabled(k));
-  refs.contactProfileOptions.innerHTML = "";
-  if (!publicProfiles.length) {
-    refs.contactProfileOptions.innerHTML = "<p class=\"share-note\">No contact profiles are public for this view.</p>";
-    return;
+const viewerProfileAccessLabel = () => {
+  if (state.shareProfiles?.length) {
+    return state.shareProfiles.map(profileLabel).join(", ");
   }
-  publicProfiles.forEach((key, index) => {
-    const label = document.createElement("label");
-    label.className = "check-chip";
-    const input = document.createElement("input");
-    input.type = "radio";
-    input.name = "contactProfile";
-    input.value = key;
-    input.checked = index === 0;
-    label.append(input, document.createTextNode(profileLabel(key)));
-    refs.contactProfileOptions.appendChild(label);
+  const visible = guestVisibleBranches();
+  if (visible.length >= BRANCH_PROFILE_KEYS.length) return "Jabnow (all)";
+  if (!visible.length) return "None visible";
+  return visible.map(k => profileLabel(k)).join(", ");
+};
+
+const contactDisplayKey = () => {
+  const jabnow = state.siteConfig.profiles.jabnow?.contact;
+  if (jabnow?.email || jabnow?.headline || jabnow?.phone) return "jabnow";
+  const publicProfiles = state.siteConfig.contactPublicProfiles.filter(k => isContentProfileEnabled(k));
+  return publicProfiles[0] || "jabnow";
+};
+
+const addContactDetail = (label, value, { href, display } = {}) => {
+  if (!value || !refs.contactDetails) return;
+  const dt = document.createElement("dt");
+  dt.textContent = label;
+  const dd = document.createElement("dd");
+  if (href) {
+    const a = document.createElement("a");
+    a.href = href;
+    if (href.startsWith("http")) {
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    }
+    a.textContent = display || value;
+    dd.appendChild(a);
+  } else {
+    dd.textContent = display || value;
+  }
+  refs.contactDetails.append(dt, dd);
+};
+
+const fillContactEditorForm = key => {
+  if (!refs.contactEditorForm) return;
+  const contact = state.siteConfig.profiles[key]?.contact;
+  if (!contact) return;
+  refs.contactEditorForm.elements.headline.value = contact.headline || "";
+  refs.contactEditorForm.elements.subhead.value = contact.subhead || "";
+  refs.contactEditorForm.elements.email.value = contact.email || "";
+  refs.contactEditorForm.elements.phone.value = contact.phone || "";
+  refs.contactEditorForm.elements.location.value = contact.location || "";
+  refs.contactEditorForm.elements.timezone.value = contact.timezone || "America/New_York";
+  if (!refs.contactLinksList) return;
+  refs.contactLinksList.innerHTML = "";
+  (contact.links?.length ? contact.links : [emptyAboutLink()]).forEach(link => {
+    refs.contactLinksList.appendChild(makeRepeatBlock(
+      [
+        { name: "label", label: "Label" },
+        { name: "url", label: "URL", placeholder: "https://…" }
+      ],
+      link,
+      null
+    ));
   });
 };
 
-const selectedContactProfile = () => {
-  const picked = refs.contactProfileOptions?.querySelector('input[name="contactProfile"]:checked');
-  return picked ? picked.value : "";
+const saveContactEditor = key => {
+  if (!refs.contactEditorForm) return;
+  const data = new FormData(refs.contactEditorForm);
+  const links = readRepeatBlocks(refs.contactLinksList, [
+    { name: "label" }, { name: "url" }
+  ]).filter(l => l.label || l.url);
+  const resume = state.siteConfig.profiles[key]?.resume;
+  state.siteConfig.profiles[key].contact = normalizeContactContent({
+    headline: String(data.get("headline") || "").trim(),
+    subhead: String(data.get("subhead") || "").trim(),
+    email: String(data.get("email") || "").trim(),
+    phone: String(data.get("phone") || "").trim(),
+    location: String(data.get("location") || "").trim(),
+    timezone: String(data.get("timezone") || "").trim(),
+    links
+  }, key, resume);
+  persistSiteConfig();
+  renderContactPage();
+  if (refs.contactEditorToast) {
+    refs.contactEditorToast.textContent = "Contact saved";
+    refs.contactEditorToast.className = "toast ok";
+    setTimeout(() => {
+      refs.contactEditorToast.textContent = "";
+      refs.contactEditorToast.className = "toast";
+    }, 2500);
+  }
 };
 
-const buildContactEmailBody = ({ name, replyEmail, message, profileKey }) => {
-  const profileLine = profileKey ? `Profile context: ${profileLabel(profileKey)}\n` : "";
+const renderContactPage = () => {
+  const key = contactDisplayKey();
+  if (!key) {
+    if (refs.contactDetails) refs.contactDetails.innerHTML = "";
+    if (refs.contactLocation) refs.contactLocation.hidden = true;
+    return;
+  }
+  const contact = state.siteConfig.profiles[key]?.contact;
+  if (!contact) return;
+
+  if (refs.contactHeadline) refs.contactHeadline.textContent = contact.headline || "My inbox is open";
+  if (refs.contactSubhead) refs.contactSubhead.textContent = contact.subhead || "";
+
+  if (refs.contactDetails) {
+    refs.contactDetails.innerHTML = "";
+    addContactDetail("Email", contact.email, { href: contact.email ? `mailto:${contact.email}` : null });
+    if (contact.phone) addContactDetail("Phone", contact.phone, { href: `tel:${contact.phone.replace(/\s/g, "")}` });
+    contact.links.forEach(link => {
+      const display = link.label || link.url.replace(/^https?:\/\/(www\.)?/, "");
+      addContactDetail(link.label || "Link", link.url, { href: link.url, display });
+    });
+  }
+
+  if (refs.contactLocation) {
+    if (contact.location) {
+      refs.contactLocation.hidden = false;
+      refs.contactLocation.innerHTML = `
+        <div class="contact-location__row"><span class="contact-location__label">Currently in</span><span class="contact-location__value">${contact.location}</span></div>
+        <div class="contact-location__row"><span class="contact-location__label">Local time</span><span class="contact-location__value" id="contact-local-time">${formatLocalTime(contact.timezone)}</span></div>
+      `;
+    } else {
+      refs.contactLocation.hidden = true;
+      refs.contactLocation.innerHTML = "";
+    }
+  }
+
+  if (isEditor()) fillContactEditorForm(key);
+  if (refs.contactEditorPanel) refs.contactEditorPanel.hidden = !isEditor();
+};
+
+const buildContactEmailBody = ({ name, replyEmail, message, profileAccess }) => {
   return `${message}
 
 ---
 This message was sent via the contact form on the Jabnow portfolio site (${PUBLIC_SITE_URL}).
-${profileLine}From: ${name} <${replyEmail}>`;
+Visitor profile access: ${profileAccess}
+From: ${name} <${replyEmail}>`;
 };
 
 const submitContactForm = async event => {
@@ -1386,10 +2188,10 @@ const submitContactForm = async event => {
   const name = String(data.get("name") || "").trim();
   const replyEmail = String(data.get("email") || "").trim();
   const message = String(data.get("message") || "").trim();
-  const profileKey = selectedContactProfile();
+  const profileAccess = viewerProfileAccessLabel();
   if (!name || !replyEmail || !message) return;
 
-  const fullBody = buildContactEmailBody({ name, replyEmail, message, profileKey });
+  const fullBody = buildContactEmailBody({ name, replyEmail, message, profileAccess });
   const subject = `Jabnow portfolio: message from ${name}`;
   const submitBtn = refs.contactForm.querySelector('button[type="submit"]');
   if (submitBtn) submitBtn.disabled = true;
@@ -1411,7 +2213,7 @@ const submitContactForm = async event => {
     refs.contactToast.textContent = "Message sent — check your inbox for a confirmation.";
     refs.contactToast.className = "toast ok";
     refs.contactForm.reset();
-    renderContactProfiles();
+    renderContactPage();
   } catch {
     const mailto = `mailto:${CONTACT_INBOX}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fullBody)}`;
     window.location.href = mailto;
@@ -1457,20 +2259,22 @@ const renderWorkSubmenu = () => {
   allLi.appendChild(allBtn);
   refs.workSubmenu.appendChild(allLi);
 
-  const sorted = [...state.projects]
-    .filter(p => isBranchProfileEnabled(normalizeBranch(p.branch)))
-    .sort((a, b) => a.title.localeCompare(b.title));
-  sorted.forEach(project => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.id = `nav-project-${project.id}`;
-    btn.textContent = project.title;
-    btn.title = project.title;
-    btn.addEventListener("click", () => showProject(project.id));
-    const li = document.createElement("li");
-    li.appendChild(btn);
-    refs.workSubmenu.appendChild(li);
-  });
+  if (isEditor()) {
+    const sorted = [...state.projects]
+      .filter(p => isBranchProfileEnabled(normalizeBranch(p.branch)))
+      .sort((a, b) => a.title.localeCompare(b.title));
+    sorted.forEach(project => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = `nav-project-${project.id}`;
+      btn.textContent = project.title;
+      btn.title = project.title;
+      btn.addEventListener("click", () => showProject(project.id));
+      const li = document.createElement("li");
+      li.appendChild(btn);
+      refs.workSubmenu.appendChild(li);
+    });
+  }
 
   const addBtn = document.createElement("button");
   addBtn.type = "button";
@@ -1522,11 +2326,12 @@ const renderProjectDetail = project => {
   };
 };
 
-function showProject(id) {
+function showProject(id, { from = "list" } = {}) {
   const project = state.projects.find(p => p.id === id);
   if (!project) return;
   if (!isBranchProfileEnabled(normalizeBranch(project.branch))) return;
   state.viewingProjectId = id;
+  state.projectViewSource = from;
   renderProjectDetail(project);
   showPage("project");
 }
@@ -1553,6 +2358,10 @@ function showPage(id) {
     if (id === "project" && state.viewingProjectId) {
       const subBtn = document.getElementById(`nav-project-${state.viewingProjectId}`);
       if (subBtn) subBtn.classList.add("active");
+      else if (!isEditor() && state.projectViewSource === "list") {
+        const allBtn = refs.workSubmenu.querySelector(".nav-submenu-all");
+        if (allBtn) allBtn.classList.add("active");
+      }
     } else if (id === "list") {
       const allBtn = refs.workSubmenu.querySelector(".nav-submenu-all");
       if (allBtn) allBtn.classList.add("active");
@@ -1580,7 +2389,7 @@ function showPage(id) {
   } else if (id === "resume") {
     renderResumePage();
   } else if (id === "contact") {
-    renderContactProfiles();
+    renderContactPage();
   } else if (id === "share") {
     renderSharePage();
   }
@@ -1590,7 +2399,7 @@ window.showPage = showPage;
 function closePage() {
   const id = state.currentPage || "home";
   if (id === "project") {
-    showPage("list");
+    showPage(state.projectViewSource === "graph" ? "home" : "list");
   } else if (id === "list") {
     showPage("home");
   } else if (id === "about" || id === "resume" || id === "contact") {
@@ -2520,7 +3329,7 @@ function buildGraph(W, H) {
       }
       if (d.kind === "project") {
         if (isEditor()) startEdit(d.project);
-        else showProject(d.project.id);
+        else showProject(d.project.id, { from: "graph" });
       }
     });
 
@@ -2764,13 +3573,55 @@ refs.resumeEditorForm?.addEventListener("submit", event => {
   saveResumeEditor(state.viewingResumeProfile);
 });
 
-refs.aboutAddLink?.addEventListener("click", () => {
-  refs.aboutLinksList?.appendChild(makeRepeatBlock(
+refs.aboutAddBook?.addEventListener("click", () => {
+  refs.aboutBooksList?.appendChild(makeBookEditorBlock(emptyBook()));
+});
+
+refs.aboutAddSong?.addEventListener("click", () => {
+  refs.aboutSongsList?.appendChild(makeRepeatBlock(
+    [
+      { name: "title", label: "Title" },
+      { name: "artist", label: "Artist (optional)" },
+      { name: "url", label: "Link", placeholder: "https://music.youtube.com/…" }
+    ],
+    emptySong(),
+    null
+  ));
+});
+
+refs.aboutPhotoFile?.addEventListener("change", async event => {
+  const file = event.target.files?.[0];
+  if (!file || !refs.aboutEditorForm) return;
+  try {
+    const url = await readFileAsDataURL(file);
+    refs.aboutEditorForm.elements.photo.value = url;
+  } catch {
+    showToast("Could not read photo", "warn");
+  }
+});
+
+refs.contactEditorForm?.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!requireEditor()) return;
+  saveContactEditor(contactDisplayKey());
+});
+
+refs.contactAddLink?.addEventListener("click", () => {
+  refs.contactLinksList?.appendChild(makeRepeatBlock(
     [{ name: "label", label: "Label" }, { name: "url", label: "URL", placeholder: "https://…" }],
     emptyAboutLink(),
     null
   ));
 });
+
+setInterval(() => {
+  if (state.currentPage !== "contact") return;
+  const el = document.getElementById("contact-local-time");
+  const key = contactDisplayKey();
+  if (el && key) {
+    el.textContent = formatLocalTime(state.siteConfig.profiles[key]?.contact?.timezone);
+  }
+}, 30000);
 
 const resumeFieldSets = {
   education: [
@@ -2859,7 +3710,7 @@ syncMediaInputs();
 renderMediaEditor();
 renderAboutPage();
 renderResumePage();
-renderContactProfiles();
+renderContactPage();
 syncGraphBranchSelectOptions();
 renderGraphActionBar();
 applyProfileUI();
