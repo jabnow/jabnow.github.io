@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://meetjabnow.vercel.app/sitemap.xml
+Sitemap: https://jabnow.github.io/sitemap.xml
 
 # AI / LLM crawlers
 User-agent: GPTBot

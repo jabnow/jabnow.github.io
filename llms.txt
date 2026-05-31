@@ -4,7 +4,7 @@
 
 ## Site
 
-- URL: https://meetjabnow.vercel.app/
+- URL: https://jabnow.github.io/
 - Type: Static single-page portfolio (HTML, CSS, JavaScript, D3 force graph)
 - Storage: Browser localStorage (projects and site content are edited in-browser)
 

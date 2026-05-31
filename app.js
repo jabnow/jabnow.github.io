@@ -2,7 +2,7 @@ const STORAGE_KEY = "jabnow_projects_v1";
 const SESSION_KEY = "jabnow_editor_v1";
 const EDITOR_USER = "jabnow";
 const EDITOR_PASS = "beans";
-const PUBLIC_SITE_URL = "https://meetjabnow.vercel.app";
+const PUBLIC_SITE_URL = "https://jabnow.github.io";
 const CONTACT_INBOX = "joywang@nyu.edu";
 const CONTACT_FORM_ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_INBOX}`;
 
