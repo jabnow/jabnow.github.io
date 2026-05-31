@@ -3,10 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jabnow — Projects</title>
+<title>Jabnow — Multi-Profile Project Portfolio</title>
+<meta name="description" content="Jabnow is a multi-profile portfolio showcasing Product, Analyst, and Indie projects — interactive graph, searchable list, résumés, and case studies." />
+<meta name="keywords" content="portfolio, projects, product, analyst, indie, resume, case studies, Jabnow" />
+<meta name="author" content="Jabnow" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" id="canonical-link" href="https://meetjabnow.vercel.app/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Jabnow" />
+<meta property="og:title" content="Jabnow — Multi-Profile Project Portfolio" />
+<meta property="og:description" content="Explore Product, Analyst, and Indie work — interactive project graph, searchable list, and profile-specific About &amp; Resume pages." />
+<meta property="og:url" content="https://meetjabnow.vercel.app/" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Jabnow — Multi-Profile Project Portfolio" />
+<meta name="twitter:description" content="Explore Product, Analyst, and Indie work — interactive project graph, searchable list, and profile-specific About &amp; Resume pages." />
+<meta name="ai-content-declaration" content="human-authored portfolio; project content editable by site owner" />
 <link rel="stylesheet" href="styles.css" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script type="application/ld+json" id="structured-data">{"@context":"https://schema.org","@type":"WebSite","name":"Jabnow","url":"https://meetjabnow.vercel.app/","description":"Multi-profile project portfolio with Product, Analyst, and Indie work lanes.","publisher":{"@type":"Person","name":"Jabnow"}}</script>
 </head>
 <body>
 
@@ -14,51 +31,62 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sb-logo">
-      <svg class="sb-starburst" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <button type="button" class="sb-logo" id="sb-logo" aria-label="Back to home">
+      <svg class="sb-starburst" id="sb-starburst" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M16 1 L17.8 10.2 L25.9 5.1 L20.8 13.2 L30 15 L20.8 16.8 L25.9 24.9 L17.8 19.8 L16 29 L14.2 19.8 L6.1 24.9 L11.2 16.8 L2 15 L11.2 13.2 L6.1 5.1 L14.2 10.2 Z" fill="#2563eb"/>
         <circle cx="16" cy="15" r="4.5" fill="white"/>
         <circle cx="16" cy="15" r="2" fill="#2563eb"/>
       </svg>
       <span class="sb-name">Jabnow</span>
-    </div>
+    </button>
 
     <hr class="sb-divider" />
 
-    <p class="sb-bio">
-      A filing cabinet for past projects and WIPs. Search the list, edit details,
-      or drop in something new. Everything is saved to this browser's storage —
-      no account, no server.
+    <p class="sb-bio" id="sb-bio">
+      A filing cabinet for past projects and WIPs. Browse the graph, search the list,
+      and explore project details.
     </p>
 
     <hr class="sb-divider" />
 
     <ul class="sb-nav">
-      <li>
-        <button onclick="showPage('home')" class="active" id="nav-home">
-          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
-          Work
-          <span class="nav-arrow">→</span>
-        </button>
+      <li class="nav-group open" id="nav-group-work">
+        <div class="nav-group-row">
+          <button type="button" onclick="showPage('home')" class="active" id="nav-work">
+            <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+            Work
+          </button>
+          <button type="button" class="nav-chevron" onclick="toggleWorkMenu()" aria-expanded="true" aria-controls="work-submenu" aria-label="Toggle work projects">
+            <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5 L5 6.5 L8 3.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <ul class="nav-submenu" id="work-submenu"></ul>
       </li>
       <li>
-        <button onclick="showPage('list')" id="nav-list">
+        <button type="button" onclick="showPage('about')" id="nav-about">
           <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><polygon points="6,1 11,10.5 1,10.5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
-          List
-          <span class="nav-arrow">→</span>
-        </button>
-      </li>
-      <li>
-        <button onclick="showPage('add')" id="nav-add">
-          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
-          Add
-          <span class="nav-arrow">→</span>
-        </button>
-      </li>
-      <li>
-        <button onclick="showPage('about')" id="nav-about">
-          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
           About
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" onclick="showPage('resume')" id="nav-resume">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Resume
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" onclick="showPage('contact')" id="nav-contact">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 3 L6 7 L11 3" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="1" y="2" width="10" height="8" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Contact
+          <span class="nav-arrow">→</span>
+        </button>
+      </li>
+      <li class="editor-only" id="nav-share-li" hidden>
+        <button type="button" onclick="showPage('share')" id="nav-share">
+          <span class="nav-icon"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6 L6 2 L10 6 L6 10 Z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></span>
+          Share
           <span class="nav-arrow">→</span>
         </button>
       </li>
@@ -66,6 +94,10 @@
 
     <div class="sb-footer">
       <span class="sb-conn"><span id="connection-dot" class="connection-dot"></span><span id="connection-text">Loading…</span></span>
+      <div class="sb-profile">
+        <span id="profile-label">Guest</span>
+        <button type="button" class="profile-logout" id="profile-logout" hidden>Sign out</button>
+      </div>
     </div>
   </aside>
 
@@ -75,94 +107,336 @@
     <!-- HOME: Force Graph -->
     <div class="page active" id="page-home">
       <svg id="graph-svg"></svg>
-      <div class="graph-hint">Click a node to edit · drag to rearrange</div>
+      <div class="graph-hint" id="graph-hint-guest">Drag nodes to rearrange · click a project to view its details</div>
+      <div class="graph-action-bar editor-only" id="graph-action-bar" hidden>
+        <div class="graph-action-bar__branch-row">
+          <label class="graph-action-bar__branch">
+            Branch
+            <select id="graph-branch-select" aria-label="Target branch for new or attached projects">
+              <option value="">Select branch…</option>
+              <option value="product">Product</option>
+              <option value="analyst">Analyst</option>
+              <option value="indie">Indie</option>
+            </select>
+          </label>
+          <span class="graph-action-bar__target" id="graph-target-label">Pick a branch or click a blue node</span>
+        </div>
+        <div class="graph-action-bar__tools">
+        <div class="graph-action-bar__search">
+          <input type="search" id="graph-project-search" placeholder="Search projects to attach…" aria-label="Search projects" autocomplete="off" />
+          <div class="graph-project-picker" id="graph-project-picker" hidden></div>
+        </div>
+        <label class="graph-action-bar__shape">
+          Shape
+          <select id="graph-shape-select" aria-label="Node shape">
+            <option value="">Auto</option>
+            <option value="hexagon">Hexagon</option>
+            <option value="circle">Circle</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+          </select>
+        </label>
+        <button type="button" class="ghost-btn" id="graph-attach-btn" disabled>Attach</button>
+        <button type="button" class="send-btn" id="graph-new-btn" disabled>New on graph</button>
+        </div>
+      </div>
     </div>
 
     <!-- LIST -->
     <div class="page" id="page-list">
       <div class="win-chrome">
-        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
-        <div class="win-title"><strong>Projects</strong><span class="win-crumb-sep">·</span><span id="current-path">All files</span></div>
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>Projects</strong><span class="win-crumb-sep">·</span><span id="current-path">All projects</span></div>
         <span class="win-right" id="results-count">0 projects</span>
       </div>
-      <div class="page-inner page-inner--wide">
-        <div class="controls">
+      <div class="list-layout">
+        <div class="list-search">
           <input id="project-search" type="search" placeholder="Search title, description, tags, tools…" aria-label="Search projects" />
-          <select id="project-sort" aria-label="Sort projects">
-            <option value="recent">Sort: Most recent</option>
-            <option value="title">Sort: Title A–Z</option>
-            <option value="category">Sort: Category A–Z</option>
-          </select>
+          <div class="filter-panel">
+            <div class="filter-group">
+              <span class="filter-group__label">Branch</span>
+              <ul class="filter-chips" id="branch-list" aria-label="Filter by branch"></ul>
+            </div>
+            <div class="filter-group">
+              <span class="filter-group__label">Category</span>
+              <ul class="filter-chips" id="folder-list" aria-label="Filter by category"></ul>
+            </div>
+          </div>
         </div>
-
-        <ul class="folder-list" id="folder-list" aria-label="Project categories"></ul>
-
-        <div class="work-list" id="project-grid"></div>
+        <div class="year-scroll" id="project-grid"></div>
       </div>
     </div>
 
     <!-- ADD / EDIT -->
     <div class="page" id="page-add">
       <div class="win-chrome">
-        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
         <div class="win-title"><strong id="editor-title">Add project</strong><span class="win-crumb-sep">·</span>Save locally</div>
         <span class="win-right">Editor</span>
       </div>
       <div class="page-inner">
         <h2 class="contact-h" id="editor-heading">New project</h2>
-        <p class="contact-sub">Fill out the form and click save. Edits replace the existing entry.</p>
+        <p class="contact-sub">Changes autosave while you edit. Use Done when finished.</p>
 
         <form id="project-form" class="cf">
           <input type="hidden" name="id" />
           <div class="cf-row">
             <div><label>Title</label><input name="title" required /></div>
-            <div><label>Category</label><input name="category" placeholder="code, excel, image…" required /></div>
+            <div><label>Branch</label>
+              <select name="branch" required>
+                <option value="product">Product</option>
+                <option value="analyst">Analyst</option>
+                <option value="indie">Indie</option>
+              </select>
+            </div>
           </div>
           <div class="cf-row">
+            <div><label>Category</label><input name="category" placeholder="code, excel, image…" /></div>
             <div><label>Updated</label><input name="updated" type="date" required /></div>
-            <div><label>Link</label><input name="url" placeholder="https://… or path/to/file.html" /></div>
           </div>
-          <div><label>Description</label><textarea name="description" rows="3" required></textarea></div>
+          <div class="cf-row">
+            <div><label>Link</label><input name="url" placeholder="https://… or path/to/file.html" /></div>
+            <div><label>Graph shape</label>
+              <select name="shape">
+                <option value="">Auto (from category)</option>
+                <option value="hexagon">Hexagon</option>
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="triangle">Triangle</option>
+              </select>
+            </div>
+          </div>
+          <div><label>Description</label><textarea name="description" rows="3"></textarea></div>
           <div><label>Tags (comma separated)</label><input name="tags" placeholder="portfolio, dashboard, automation" /></div>
           <div><label>Tools (comma separated)</label><input name="tools" placeholder="JavaScript, Excel, Python" /></div>
+          <label class="cf-check"><input type="checkbox" name="graphAttached" /> Show on homepage graph</label>
+
+          <div class="media-editor">
+            <label>Media &amp; attachments</label>
+            <p class="media-hint">Photos, videos, spreadsheets, embeds (CodePen, Sheets, YouTube), and links. Uploads stay in this browser.</p>
+            <div class="media-add">
+              <select id="media-type" aria-label="Media type">
+                <option value="image">Image · upload</option>
+                <option value="video">Video · upload</option>
+                <option value="excel">Spreadsheet · upload</option>
+                <option value="embed">Embed · link</option>
+                <option value="link">Link</option>
+              </select>
+              <input type="file" id="media-file" accept="image/*" multiple />
+              <input type="url" id="media-url" placeholder="https://…" hidden />
+              <input type="text" id="media-label" placeholder="Caption (optional)" />
+              <button type="button" class="ghost-btn" id="media-add-btn" hidden>Add</button>
+            </div>
+            <ul class="media-list" id="media-list" aria-label="Attached media"></ul>
+          </div>
 
           <div class="cf-actions">
-            <button type="submit" class="send-btn" id="submit-btn">Save project</button>
-            <button type="button" class="ghost-btn" id="cancel-edit-btn" hidden>Cancel edit</button>
+            <button type="submit" class="send-btn" id="submit-btn">Done</button>
+            <button type="button" class="ghost-btn" id="cancel-edit-btn" hidden>Cancel</button>
+            <span id="autosave-status" class="toast"></span>
             <span id="toast" class="toast"></span>
           </div>
         </form>
       </div>
     </div>
 
+    <!-- PROJECT DETAIL -->
+    <div class="page" id="page-project">
+      <div class="win-chrome">
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong id="project-detail-title">Project</strong><span class="win-crumb-sep">·</span><span id="project-detail-cat">work</span></div>
+        <span class="win-right" id="project-detail-date"></span>
+      </div>
+      <div class="page-inner">
+        <h2 class="contact-h" id="project-detail-heading"></h2>
+        <p class="contact-sub" id="project-detail-desc"></p>
+        <div class="wi-meta" id="project-detail-meta"></div>
+        <div class="media-gallery" id="project-detail-media" hidden></div>
+        <div class="project-detail-actions">
+          <a class="send-btn project-link-btn" id="project-detail-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Open project</a>
+          <button type="button" class="ghost-btn" id="project-detail-edit">Edit project</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUME -->
+    <div class="page" id="page-resume">
+      <div class="win-chrome">
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>Resume</strong><span class="win-crumb-sep">·</span><span id="resume-profile-label">Jabnow</span></div>
+        <span class="win-right">Resume</span>
+      </div>
+      <div class="page-inner">
+        <div class="profile-switcher profile-switcher--actions">
+          <div class="profile-switcher__row">
+            <label for="resume-profile-select">Profile</label>
+            <select id="resume-profile-select" aria-label="Select resume profile"></select>
+          </div>
+          <button type="button" class="ghost-btn" id="resume-export-pdf" aria-label="Download ATS-friendly PDF">Download PDF</button>
+        </div>
+        <div class="guest-preview-bar editor-only" id="resume-preview-bar" hidden>
+          <p class="guest-preview-bar__label">Guest preview — this is how visitors see this résumé.</p>
+          <button type="button" class="send-btn" id="resume-preview-edit">Edit</button>
+        </div>
+        <article id="resume-content" class="resume-ats" aria-label="Resume content"></article>
+        <section class="page-editor editor-only" id="resume-editor-panel" hidden aria-label="Edit resume">
+          <h3 class="page-editor__title">Edit résumé</h3>
+          <p class="page-editor__hint">Structured for ATS parsing and one-page PDF export. One bullet per line.</p>
+          <form id="resume-editor-form" class="cf">
+            <div class="cf-row">
+              <div><label for="resume-edit-name">Full name</label><input id="resume-edit-name" name="name" required /></div>
+              <div><label for="resume-edit-location">Location</label><input id="resume-edit-location" name="location" placeholder="City, State, Country" /></div>
+            </div>
+            <div class="cf-row">
+              <div><label for="resume-edit-phone">Phone</label><input id="resume-edit-phone" name="phone" /></div>
+              <div><label for="resume-edit-email">Email</label><input id="resume-edit-email" name="email" type="email" /></div>
+            </div>
+            <div><label for="resume-edit-summary">Summary (optional)</label><textarea id="resume-edit-summary" name="summary" rows="2"></textarea></div>
+            <p class="sec-label">Education</p>
+            <div id="resume-education-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="resume-add-education">+ Add education</button>
+            <p class="sec-label">Experience</p>
+            <div id="resume-experience-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="resume-add-experience">+ Add experience</button>
+            <p class="sec-label">Skills &amp; other sections</p>
+            <div id="resume-skills-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="resume-add-skill">+ Add section</button>
+            <div class="cf-actions">
+              <button type="submit" class="send-btn">Save résumé</button>
+              <span id="resume-editor-toast" class="toast"></span>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="page" id="page-contact">
+      <div class="win-chrome">
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>Contact</strong><span class="win-crumb-sep">·</span>Get in touch</div>
+        <span class="win-right">Contact</span>
+      </div>
+      <div class="page-inner">
+        <h2 class="contact-h">Say hello</h2>
+        <p class="contact-sub">Questions about a project, collaboration, or anything else — reach out using the form below.</p>
+
+        <div class="profile-switcher" id="contact-profile-switcher">
+          <span class="profile-switcher__label">Contact as</span>
+          <div class="check-grid" id="contact-profile-options" role="group" aria-label="Contact profiles"></div>
+        </div>
+
+        <form id="contact-form" class="cf">
+          <div class="cf-row">
+            <div><label for="contact-name">Name</label><input id="contact-name" name="name" required /></div>
+            <div><label for="contact-email">Email</label><input id="contact-email" name="email" type="email" required /></div>
+          </div>
+          <div><label for="contact-message">Message</label><textarea id="contact-message" name="message" rows="5" required></textarea></div>
+          <div class="cf-actions">
+            <button type="submit" class="send-btn">Send message</button>
+            <span id="contact-toast" class="toast"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- LOGIN (hidden — triple-click logo icon) -->
+    <div class="page" id="page-login">
+      <div class="win-chrome">
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>Sign in</strong><span class="win-crumb-sep">·</span>Editor access</div>
+        <span class="win-right">Private</span>
+      </div>
+      <div class="page-inner">
+        <h2 class="contact-h">Editor sign in</h2>
+        <p class="contact-sub">Enter your credentials to unlock editing — add projects, update details, and manage site content.</p>
+
+        <form id="login-form" class="cf">
+          <div><label for="login-user">Username</label><input id="login-user" name="username" autocomplete="username" required /></div>
+          <div><label for="login-pass">Password</label><input id="login-pass" name="password" type="password" autocomplete="current-password" required /></div>
+          <div class="cf-actions">
+            <button type="submit" class="send-btn">Sign in</button>
+            <button type="button" class="ghost-btn" id="login-cancel">Back</button>
+            <span id="login-toast" class="toast"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- SHARE (editor) -->
+    <div class="page" id="page-share">
+      <div class="win-chrome">
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>Share</strong><span class="win-crumb-sep">·</span>Profiles &amp; permissions</div>
+        <span class="win-right">Editor</span>
+      </div>
+      <div class="page-inner page-inner--wide">
+        <h2 class="contact-h">Guest visibility</h2>
+        <p class="contact-sub">Choose which branch profiles appear on the graph, project filters, and profile dropdowns (for everyone, including while editing). Hidden profiles can still be edited on the Share page.</p>
+        <fieldset class="share-fieldset">
+          <legend>Profiles visible to guests</legend>
+          <div class="check-grid" id="visibility-checks" role="group" aria-label="Guest-visible profiles"></div>
+        </fieldset>
+
+        <h2 class="contact-h share-section-h">Share link</h2>
+        <p class="contact-sub">Choose which profiles a shared link can access. Jabnow includes everything; other options grey out disabled branches on the graph.</p>
+
+        <fieldset class="share-fieldset">
+          <legend>Include in share link</legend>
+          <div class="check-grid" id="share-profile-checks" role="group" aria-label="Share profile access"></div>
+        </fieldset>
+
+        <div class="share-link-row">
+          <input id="share-link-output" type="text" readonly aria-label="Generated share link" />
+          <button type="button" class="send-btn" id="share-link-copy">Copy link</button>
+        </div>
+        <p class="share-note" id="share-link-note"></p>
+
+        <h2 class="contact-h share-section-h">Contact page</h2>
+        <p class="contact-sub">Profiles shown on the public contact form.</p>
+        <fieldset class="share-fieldset">
+          <legend>Public contact profiles</legend>
+          <div class="check-grid" id="contact-public-checks" role="group" aria-label="Public contact profiles"></div>
+        </fieldset>
+
+        <h2 class="contact-h share-section-h">Profile content</h2>
+        <p class="contact-sub">Edit About and Résumé directly on those pages when signed in. All profiles remain editable there regardless of visibility settings above.</p>
+        <span id="share-toast" class="toast" aria-live="polite"></span>
+      </div>
+    </div>
+
     <!-- ABOUT -->
     <div class="page" id="page-about">
       <div class="win-chrome">
-        <div class="win-dot"></div><div class="win-dot"></div><div class="win-dot"></div>
-        <div class="win-title"><strong>About</strong><span class="win-crumb-sep">·</span>What is this</div>
+        <button type="button" class="win-dot win-dot-close" onclick="closePage()" aria-label="Close"></button><button type="button" class="win-dot win-dot-minimize" onclick="minimizePage()" aria-label="Show sidebar"></button><button type="button" class="win-dot win-dot-expand" onclick="expandPage()" aria-label="Full page"></button>
+        <div class="win-title"><strong>About</strong><span class="win-crumb-sep">·</span><span id="about-profile-label">Jabnow</span></div>
         <span class="win-right">About</span>
       </div>
       <div class="page-inner">
-        <p class="about-hero">A small filing cabinet to keep track of past projects and WIPs.</p>
-        <p class="about-bio">The home view is a force-directed graph of every project, grouped around a center node. Click a project to edit it; drag any node to rearrange the layout.</p>
-        <p class="about-bio">The list view supports search, category folders, and sort. Everything you add or change is stored in this browser's <code>localStorage</code>, so it sticks around between visits on this device.</p>
-
-        <p class="sec-label">Stack</p>
-        <div class="values-grid">
-          <div class="value-card">Vanilla HTML / CSS / JS</div>
-          <div class="value-card">D3 Force Graph</div>
-          <div class="value-card">Browser localStorage</div>
+        <div class="profile-switcher">
+          <label for="about-profile-select">Profile</label>
+          <select id="about-profile-select" aria-label="Select about profile"></select>
         </div>
-
-        <p class="sec-label">Tips</p>
-        <div class="exp-item">
-          <div><div class="exp-company">Clear all data</div><div class="exp-desc">Open DevTools → Application → Local Storage → delete the <code>jabnow_projects_v1</code> key. The next load will reseed with defaults.</div></div>
-          <div class="exp-date">DevTools</div>
+        <div class="guest-preview-bar editor-only" id="about-preview-bar" hidden>
+          <p class="guest-preview-bar__label">Guest preview — this is how visitors see this page.</p>
+          <button type="button" class="send-btn" id="about-preview-edit">Edit</button>
         </div>
-        <div class="exp-item">
-          <div><div class="exp-company">Per-device storage</div><div class="exp-desc">Data lives on this browser only. To sync across devices you'd need to add a backend later.</div></div>
-          <div class="exp-date">Note</div>
-        </div>
+        <article id="about-content" aria-label="About content"></article>
+        <section class="page-editor editor-only" id="about-editor-panel" hidden aria-label="Edit about page">
+          <h3 class="page-editor__title">Edit about</h3>
+          <form id="about-editor-form" class="cf">
+            <div><label for="about-edit-hero">Hero</label><input id="about-edit-hero" name="hero" required /></div>
+            <div><label for="about-edit-body">Body (one paragraph per line)</label><textarea id="about-edit-body" name="body" rows="4" required></textarea></div>
+            <div><label for="about-edit-stack">Stack cards (comma separated)</label><input id="about-edit-stack" name="stack" placeholder="Vanilla HTML, D3, localStorage" /></div>
+            <p class="sec-label">Other links</p>
+            <div id="about-links-list" class="repeat-list"></div>
+            <button type="button" class="ghost-btn repeat-add" id="about-add-link">+ Add link</button>
+            <div class="cf-actions">
+              <button type="submit" class="send-btn">Save about</button>
+              <span id="about-editor-toast" class="toast"></span>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
 
